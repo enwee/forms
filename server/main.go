@@ -32,11 +32,19 @@ var tmpls = []string{
 	"./ui/html/form.view.tmpl",
 }
 
+var (
+	t       = template.New("")
+	funcMap = template.FuncMap{
+		"minus1": minus1,
+	}
+)
+
 func main() {
 	errorLog := log.New(os.Stderr, "error:\t", log.LstdFlags|log.Lshortfile)
 	infoLog := log.New(os.Stderr, "info:\t", log.LstdFlags)
 
-	ts, err := template.ParseFiles(tmpls...)
+	t.Funcs(funcMap)
+	_, err := t.ParseGlob("ui/html/*.tmpl")
 	if err != nil {
 		errorLog.Fatal(err)
 	}
@@ -44,7 +52,7 @@ func main() {
 	app := application{
 		errorLog: errorLog,
 		infoLog:  infoLog,
-		tmpl:     ts,
+		tmpl:     t,
 	}
 
 	port := os.Getenv("PORT")
@@ -120,7 +128,7 @@ func (app *application) makeForm(w http.ResponseWriter, r *http.Request) {
 			edit = false
 		}
 		// method is POST
-		err = app.tmpl.Execute(w, form{title, fields, edit})
+		err = app.tmpl.ExecuteTemplate(w, "layout", form{title, fields, edit})
 		if err != nil {
 			app.errorLog.Print(err)
 			http.Error(w, "Internal Server Error", 500)
@@ -129,8 +137,21 @@ func (app *application) makeForm(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// method is not POST
-	fields = []formItem{{"text", ""}}
-	err := app.tmpl.Execute(w, form{"", fields, true})
+	fields = []formItem{
+		{"text", "Name"},
+		{"text", "Email"},
+		{"text", "Contact"},
+		{"text", ""},
+		{"text", "Order"},
+		{"text", "Qty"},
+		{"text", ""},
+		{"checkbox", "Chilli packs"},
+		{"checkbox", "Disposable cutlery"},
+		{"checkbox", "Self collection"},
+	}
+	err := app.tmpl.ExecuteTemplate(w, "layout", form{"Lam's Home Bake Order Form", fields, false})
+	// fields = []formItem{{"text", ""}}
+	// err := app.tmpl.Execute(w, form{"", fields, true})
 	if err != nil {
 		app.errorLog.Print(err)
 		http.Error(w, "Internal Server Error", 500)
@@ -149,4 +170,9 @@ func (app *application) handlePanic(next http.Handler) http.Handler {
 		next.ServeHTTP(w, r)
 	}
 	return http.HandlerFunc(fn)
+}
+
+//for template.FuncMap
+func minus1(x int) int {
+	return x - 1
 }
