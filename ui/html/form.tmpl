@@ -1,0 +1,12 @@
+{{define "form"}}
+<form method="POST">
+    <button name="action" value="edit">Edit</button>
+    <button name="action" value="view">Preview</button>
+    <br>
+    {{if .Edit}}
+        {{template "form.edit" .}}
+    {{else}}
+        {{template "form.view" .}}
+    {{end}}
+</form>
+{{end}}

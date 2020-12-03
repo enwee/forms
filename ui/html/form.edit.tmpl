@@ -1,0 +1,16 @@
+{{define "form.edit"}}
+<input type="text" name="title" placeholder="Order Form Title"  value={{.Title}}>
+        <br>
+        {{range $index, $_:= .Fields}}
+            <input type="text" name="label" value={{.Value}}>
+            <input type="hidden" name="type" value={{.Type}}>
+            <input type={{.Type}} disabled>
+            <button name="action" value="upp{{$index}}">▲</button>
+            <button name="action" value="dwn{{$index}}">▼</button>
+            <button name="action" value="add{{$index}}">➕</button>
+            <button name="action" value="del{{$index}}">❌</button>
+            <button name="action" value="txt{{$index}}">⌨</button>
+            <button name="action" value="cxb{{$index}}">✅</button>
+            <br>
+        {{end}}
+{{end}}
