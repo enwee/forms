@@ -47,11 +47,16 @@ func main() {
 		tmpl:     ts,
 	}
 
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "5000"
+	}
+
 	router := http.NewServeMux()
 	router.HandleFunc("/", app.makeForm)
-	fmt.Println("Server starting at port :5000")
+	fmt.Println("Server starting at port :", port)
 
-	err = http.ListenAndServe(":5000", app.handlePanic(router))
+	err = http.ListenAndServe(":"+port, app.handlePanic(router))
 	errorLog.Fatal(err)
 }
 
