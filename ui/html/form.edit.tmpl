@@ -1,17 +1,29 @@
 {{define "form.edit"}}
-<input type="text" name="title" placeholder="Order Form Title"  value={{.Title}}>
+    <h1>Form Title <input type="text" name="title" placeholder="Order Form Title"  value={{.Title}}></h1>
+    {{$lastIndex := len .FormItems | minus1}}
+    {{range $index, $_ := .FormItems}}
+        <input type="text" name="label" value={{.Label}}>
+        <input type="hidden" name="type" value={{.Type}}>
+        {{if eq .Type "select"}}<select disabled></select>
+        {{else}}<input type={{.Type}} disabled>{{end}}
+        <button name="action" value="upp{{$index}}" {{if eq $index 0}}disabled{{end}}>▲</button>
+        <button name="action" value="dwn{{$index}}" {{if eq $index $lastIndex}}disabled{{end}}>▼</button>
+        <button name="action" value="add{{$index}}">➕</button>
+        <button name="action" value="del{{$index}}" {{if eq $lastIndex 0}}disabled{{end}}>❌</button>
+        <button name="action" value="txt{{$index}}" {{if eq .Type "text"}}disabled{{end}}>⌨</button>
+        <button name="action" value="cxb{{$index}}" {{if eq .Type "checkbox"}}disabled{{end}}>✅</button>
+        <button name="action" value="sel{{$index}}" {{if eq .Type "select"}}disabled{{end}}>📑</button>
         <br>
-        {{$lastIndex := len .Fields | minus1}}
-        {{range $index, $_:= .Fields}}
-            <input type="text" name="label" value={{.Value}}>
-            <input type="hidden" name="type" value={{.Type}}>
-            <input type={{.Type}} disabled>
-            <button name="action" value="upp{{$index}}" {{if eq $index 0}}disabled{{end}}>▲</button>
-            <button name="action" value="dwn{{$index}}" {{if eq $index $lastIndex}}disabled{{end}}>▼</button>
-            <button name="action" value="add{{$index}}">➕</button>
-            <button name="action" value="del{{$index}}" {{if eq $lastIndex 0}}disabled{{end}}>❌</button>
-            <button name="action" value="txt{{$index}}" {{if eq .Type "text"}}disabled{{end}}>⌨</button>
-            <button name="action" value="cxb{{$index}}" {{if eq .Type "checkbox"}}disabled{{end}}>✅</button>
-            <br>
+        {{if eq .Type "select"}}
+            {{$lastIndex := len .Options | minus1}}
+            {{range $idx, $_ := .Options}}
+                ------------ <input type="text" name="options{{$index}}" value={{.}}>
+                <button name="action" value="opt{{$index}} upp{{$idx}}" {{if eq $idx 0}}disabled{{end}}>▲</button>
+                <button name="action" value="opt{{$index}} dwn{{$idx}}" {{if eq $idx $lastIndex}}disabled{{end}}>▼</button>
+                <button name="action" value="opt{{$index}} add{{$idx}}">➕</button>
+                <button name="action" value="opt{{$index}} del{{$idx}}" {{if eq $lastIndex 0}}disabled{{end}}>❌</button>
+                <br>
+            {{end}}
         {{end}}
+    {{end}}
 {{end}}

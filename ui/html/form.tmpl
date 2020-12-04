@@ -1,9 +1,9 @@
 {{define "form"}}
 <form method="POST">
-    <button name="action" value="edit" {{if .Edit}}disabled{{end}}>Edit</button>
-    <button name="action" value="view" {{if not .Edit}}disabled{{end}}>Preview</button>
+    <button name="action" value="edit" {{if .EditMode}}disabled{{end}}>Edit</button>
+    <button name="action" value="view" {{if not .EditMode}}disabled{{end}}>Preview</button>
     <br>
-    {{if .Edit}}
+    {{if .EditMode}}
         {{template "form.edit" .}}
     {{else}}
         {{template "form.view" .}}

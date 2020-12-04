@@ -1,15 +1,16 @@
 {{define "form.view"}}
-<input type="hidden" name="title" value={{.Title}}>
-        <h1>{{.Title}}</h1>
-        {{range .Fields}}
-            <input type="hidden" name="label" value={{.Value}}>
-            <input type="hidden" name="type" value={{.Type}}>
-            {{if .Value}}
-                <label>{{.Value}}</label>
-                <input type={{.Type}} disabled>
-            {{else}}
-                <br>
-            {{end}}
-            <br>
+    <input type="hidden" name="title" value={{.Title}}>
+    <h1>{{.Title}}</h1>
+    {{range $index, $_ := .FormItems}}
+        <input type="hidden" name="label" value={{.Label}}>
+        <input type="hidden" name="type" value={{.Type}}>
+        {{range .Options}}<input type="hidden" name="options{{$index}}" value={{.}}>{{end}}
+        {{if .Label}}
+            <label>{{.Label}}</label>
+            {{if eq .Type "select"}}
+                <select>{{range .Options}}<option>{{.}}</option>{{end}}</select>
+            {{else}}<input type={{.Type}}>{{end}}
         {{end}}
+        <br>
+    {{end}}
 {{end}}

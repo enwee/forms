@@ -7,7 +7,9 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"runtime/debug"
 	"strconv"
+	"strings"
 )
 
 type application struct {
@@ -16,20 +18,15 @@ type application struct {
 }
 
 type formItem struct {
-	Type, Value string
+	Type    string
+	Label   string
+	Options []string
 }
 
 type form struct {
-	Title  string
-	Fields []formItem
-	Edit   bool
-}
-
-var tmpls = []string{
-	"./ui/html/layout.tmpl",
-	"./ui/html/form.tmpl",
-	"./ui/html/form.edit.tmpl",
-	"./ui/html/form.view.tmpl",
+	Title     string
+	FormItems []formItem
+	EditMode  bool
 }
 
 var (
@@ -69,66 +66,103 @@ func main() {
 }
 
 func (app *application) makeForm(w http.ResponseWriter, r *http.Request) {
-	fields := []formItem{}
+	formItems := []formItem{}
 	if r.Method == "POST" {
 		r.ParseForm()
-
-		// app.infoLog.Printf("%+v", r.Form)
 
 		title := r.FormValue("title")
 
 		//action := r.Form["action"][0] //must check action exists else panic
-		action := r.FormValue("action")
+		actions := strings.Split(r.FormValue("action"), " ")
+		action := actions[0]
 		index := 0
 		err := errors.New("")
-		edit := true
+		editMode := true
 
 		if action != "edit" && action != "view" {
-			index, err = strconv.Atoi(action[3:])
+			action, index, err = getAction(action)
 			if err != nil {
 				app.errorLog.Print(err)
 				http.Error(w, "Invalid action index value", 400)
 				return
 			}
-			action = action[:3]
 		}
 
 		labels := r.Form["label"]
 		inputType := r.Form["type"] //check both len same
-		for i, value := range labels {
-			fields = append(fields, formItem{inputType[i], value})
+		for i, label := range labels {
+			options := []string{}
+			if inputType[i] == "select" {
+				opts := r.Form["options"+strconv.Itoa(i)]
+				for _, option := range opts {
+					options = append(options, option)
+				}
+			}
+			formItems = append(formItems, formItem{inputType[i], label, options})
 		}
 
 		switch action {
 		case "add":
-			fields = append(fields, formItem{"text", ""})
-			copy(fields[index+2:], fields[index+1:])
-			fields[index+1] = formItem{"text", ""}
+			formItems = append(formItems, formItem{"text", "", []string{}})
+			copy(formItems[index+2:], formItems[index+1:])
+			formItems[index+1] = formItem{"text", "", []string{}}
 		case "del":
 			if len(labels) == 1 {
-				fields = []formItem{{"text", ""}}
+				formItems = []formItem{{"text", "", []string{}}}
 			} else {
-				fields = append(fields[:index], fields[index+1:]...)
+				formItems = append(formItems[:index], formItems[index+1:]...)
 			}
 		case "upp":
 			if index != 0 {
-				fields[index-1], fields[index] = fields[index], fields[index-1]
+				formItems[index-1], formItems[index] = formItems[index], formItems[index-1]
 			}
 		case "dwn":
 			if index != len(labels)-1 {
-				fields[index], fields[index+1] = fields[index+1], fields[index]
+				formItems[index], formItems[index+1] = formItems[index+1], formItems[index]
 			}
+		case "opt":
+			options := formItems[index].Options
+			action, idx, err := getAction(actions[1])
+			if err != nil {
+				app.errorLog.Print(err)
+				http.Error(w, "Invalid action index value", 400)
+				return
+			}
+			switch action {
+			case "add":
+				options = append(options, "")
+				copy(options[idx+2:], options[idx+1:])
+				options[idx+1] = ""
+			case "del":
+				if len(options) == 1 {
+					options = []string{""}
+				} else {
+					options = append(options[:idx], options[idx+1:]...)
+				}
+			case "upp":
+				if idx != 0 {
+					options[idx-1], options[idx] = options[idx], options[idx-1]
+				}
+			case "dwn":
+				if idx != len(options)-1 {
+					options[idx], options[idx+1] = options[idx+1], options[idx]
+				}
+			}
+			formItems[index].Options = options
 		case "txt":
-			fields[index].Type = "text"
+			formItems[index].Type = "text"
 		case "cxb":
-			fields[index].Type = "checkbox"
+			formItems[index].Type = "checkbox"
+		case "sel":
+			formItems[index].Type = "select"
+			formItems[index].Options = []string{""}
 		case "edit":
-			edit = true
+			editMode = true
 		case "view":
-			edit = false
+			editMode = false
 		}
 		// method is POST
-		err = app.tmpl.ExecuteTemplate(w, "layout", form{title, fields, edit})
+		err = app.tmpl.ExecuteTemplate(w, "layout", form{title, formItems, editMode})
 		if err != nil {
 			app.errorLog.Print(err)
 			http.Error(w, "Internal Server Error", 500)
@@ -137,19 +171,20 @@ func (app *application) makeForm(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// method is not POST
-	fields = []formItem{
-		{"text", "Name"},
-		{"text", "Email"},
-		{"text", "Contact"},
-		{"text", ""},
-		{"text", "Order"},
-		{"text", "Qty"},
-		{"text", ""},
-		{"checkbox", "Chilli packs"},
-		{"checkbox", "Disposable cutlery"},
-		{"checkbox", "Self collection"},
+	formItems = []formItem{
+		{"select", "Order", []string{"Chicken", "Fish", "Pork", "Beef"}},
+		{"select", "Qty", []string{"1", "2", "3"}},
+		{"checkbox", "Chilli packs", []string{}},
+		{"checkbox", "Disposable cutlery", []string{}},
+		{"text", "Comments", []string{}},
+		{"text", "", []string{}},
+		{"text", "Name", []string{}},
+		{"text", "Email", []string{}},
+		{"text", "Contact", []string{}},
+		{"text", "Delivery address (if any)", []string{}},
+		{"checkbox", "Self collection", []string{}},
 	}
-	err := app.tmpl.ExecuteTemplate(w, "layout", form{"Lam's Home Bake Order Form", fields, false})
+	err := app.tmpl.ExecuteTemplate(w, "layout", form{"Lam's BBQ Order Form", formItems, false})
 	// fields = []formItem{{"text", ""}}
 	// err := app.tmpl.Execute(w, form{"", fields, true})
 	if err != nil {
@@ -163,16 +198,11 @@ func (app *application) handlePanic(next http.Handler) http.Handler {
 		defer func() {
 			err := recover()
 			if err != nil {
-				app.errorLog.Println(err)
+				app.errorLog.Println(err, string(debug.Stack()))
 				http.Error(w, "Internal Server Error", 500)
 			}
 		}()
 		next.ServeHTTP(w, r)
 	}
 	return http.HandlerFunc(fn)
-}
-
-//for template.FuncMap
-func minus1(x int) int {
-	return x - 1
 }
