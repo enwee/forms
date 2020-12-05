@@ -13,8 +13,9 @@ import (
 )
 
 type application struct {
-	errorLog, infoLog *log.Logger
-	tmpl              *template.Template
+	errorLog *log.Logger
+	infoLog  *log.Logger
+	tmpl     *template.Template
 }
 
 type formItem struct {
@@ -29,19 +30,13 @@ type form struct {
 	EditMode  bool
 }
 
-var (
-	t       = template.New("")
-	funcMap = template.FuncMap{
-		"minus1": minus1,
-	}
-)
-
 func main() {
 	errorLog := log.New(os.Stderr, "error:\t", log.LstdFlags|log.Lshortfile)
 	infoLog := log.New(os.Stderr, "info:\t", log.LstdFlags)
 
-	t.Funcs(funcMap)
-	_, err := t.ParseGlob("ui/html/*.tmpl")
+	t, err := template.New("").
+		Funcs(template.FuncMap{"minus1": minus1}).
+		ParseGlob("ui/html/*.tmpl")
 	if err != nil {
 		errorLog.Fatal(err)
 	}
@@ -103,8 +98,7 @@ func (app *application) makeForm(w http.ResponseWriter, r *http.Request) {
 
 		switch action {
 		case "add":
-			formItems = append(formItems, formItem{"text", "", []string{}})
-			copy(formItems[index+2:], formItems[index+1:])
+			formItems = append(formItems[:index+1], formItems[index:]...)
 			formItems[index+1] = formItem{"text", "", []string{}}
 		case "del":
 			if len(labels) == 1 {
@@ -130,8 +124,7 @@ func (app *application) makeForm(w http.ResponseWriter, r *http.Request) {
 			}
 			switch action {
 			case "add":
-				options = append(options, "")
-				copy(options[idx+2:], options[idx+1:])
+				options = append(options[:idx+1], options[idx:]...)
 				options[idx+1] = ""
 			case "del":
 				if len(options) == 1 {
