@@ -5,8 +5,8 @@
         <input type="hidden" name="label" value={{.Label}}>
         <input type="hidden" name="type" value={{.Type}}>
         {{range .Options}}<input type="hidden" name="options{{$index}}" value={{.}}>{{end}}
+        <label>{{.Label}}</label>
         {{if .Label}}
-            <label>{{.Label}}</label>
             {{if eq .Type "select"}}
                 <select>{{range .Options}}<option>{{.}}</option>{{end}}</select>
             {{else}}<input type={{.Type}}>{{end}}
