@@ -3,9 +3,9 @@
     {{$lastIndex := len .FormItems | minus1}}
     {{range $index, $_ := .FormItems}}
         <input type="text" name="label" value={{.Label}}>
-        <input type="hidden" name="type" value={{.Type}}>
         {{if eq .Type "select"}}<select disabled></select>
         {{else}}<input type={{.Type}} disabled>{{end}}
+        <input type="hidden" name="type" value={{.Type}}>
         <button name="action" value="upp{{$index}}" {{if eq $index 0}}disabled{{end}}>▲</button>
         <button name="action" value="dwn{{$index}}" {{if eq $index $lastIndex}}disabled{{end}}>▼</button>
         <button name="action" value="add{{$index}}">➕</button>
