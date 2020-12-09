@@ -188,13 +188,13 @@ func TestMakeFormEditActions(t *testing.T) {
 			},
 		},
 		{
-			name:   "Change form item type select/txt",
-			action: "txt0",
+			name:   "Change form item type select/cxb",
+			action: "cxb0",
 			formItems: []formItem{
 				{"1", "select", []string{""}},
 			},
 			expected: []formItem{
-				{"1", "text", nil},
+				{"1", "checkbox", nil},
 			},
 		},
 		{

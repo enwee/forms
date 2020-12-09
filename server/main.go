@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"regexp"
 )
 
 type application struct {
@@ -25,6 +26,8 @@ type form struct {
 	FormItems []formItem
 	EditMode  bool
 }
+
+var re = regexp.MustCompile(`(^(add|del|upp|dwn|txt|cxb|sel)\d+$|^opt\d+ (add|del|upp|dwn)\d+$)`)
 
 func main() {
 	errorLog := log.New(os.Stderr, "error:\t", log.LstdFlags|log.Lshortfile)
@@ -51,10 +54,6 @@ func main() {
 	router := http.NewServeMux()
 	router.HandleFunc("/", app.makeForm)
 	fmt.Println("Server starting at port :", port)
-
-	// temp
-	// go test(&app)
-	// temp
 
 	err = http.ListenAndServe(":"+port, app.handlePanic(router))
 	errorLog.Fatal(err)
