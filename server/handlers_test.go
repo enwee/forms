@@ -84,7 +84,7 @@ func TestMakeFormPreview(t *testing.T) {
 	}
 }
 
-func TestMakeFormEdit(t *testing.T) {
+func TestMakeFormEditView(t *testing.T) {
 	tests := []test{
 		{
 			name:      "Empty Label",
@@ -121,10 +121,139 @@ func TestMakeFormEdit(t *testing.T) {
 		runTest(test, t)
 	}
 }
+func TestMakeFormEditActions(t *testing.T) {
+	tests := []test{
+		{
+			name:   "Add form item",
+			action: "add0",
+			formItems: []formItem{
+				{"Order", "text", nil},
+				{"Contact", "text", nil},
+			},
+			expected: []formItem{
+				{"Order", "text", nil},
+				{"", "text", nil},
+				{"Contact", "text", nil},
+			},
+		},
+		{
+			name:   "Delete form item",
+			action: "del1",
+			formItems: []formItem{
+				{"Order", "text", nil},
+				{"", "text", nil},
+				{"Contact", "text", nil},
+			},
+			expected: []formItem{
+				{"Order", "text", nil},
+				{"Contact", "text", nil},
+			},
+		},
+		{
+			name:   "Move form item up",
+			action: "upp1",
+			formItems: []formItem{
+				{"1", "text", nil},
+				{"2", "text", nil},
+				{"3", "text", nil},
+			},
+			expected: []formItem{
+				{"2", "text", nil},
+				{"1", "text", nil},
+				{"3", "text", nil},
+			},
+		},
+		{
+			name:   "Move form item down",
+			action: "dwn1",
+			formItems: []formItem{
+				{"1", "text", nil},
+				{"2", "text", nil},
+				{"3", "text", nil},
+			},
+			expected: []formItem{
+				{"1", "text", nil},
+				{"3", "text", nil},
+				{"2", "text", nil},
+			},
+		},
+		{
+			name:   "Change form item type txt/select",
+			action: "sel0",
+			formItems: []formItem{
+				{"1", "text", nil},
+			},
+			expected: []formItem{
+				{"1", "select", []string{""}},
+			},
+		},
+		{
+			name:   "Change form item type select/txt",
+			action: "txt0",
+			formItems: []formItem{
+				{"1", "select", []string{""}},
+			},
+			expected: []formItem{
+				{"1", "text", nil},
+			},
+		},
+		{
+			name:   "Add select option item",
+			action: "opt0 add0",
+			formItems: []formItem{
+				{"Order", "select", []string{"1", "2"}},
+			},
+			expected: []formItem{
+				{"Order", "select", []string{"1", "", "2"}},
+			},
+		},
+		{
+			name:   "Delete select option item",
+			action: "opt0 del1",
+			formItems: []formItem{
+				{"Order", "select", []string{"1", "2", "3"}},
+			},
+			expected: []formItem{
+				{"Order", "select", []string{"1", "3"}},
+			},
+		},
+		{
+			name:   "Move select option item up",
+			action: "opt0 upp1",
+			formItems: []formItem{
+				{"Order", "select", []string{"1", "2", "3"}},
+			},
+			expected: []formItem{
+				{"Order", "select", []string{"2", "1", "3"}},
+			},
+		},
+		{
+			name:   "Move select option item down",
+			action: "opt0 dwn1",
+			formItems: []formItem{
+				{"Order", "select", []string{"1", "2", "3"}},
+			},
+			expected: []formItem{
+				{"Order", "select", []string{"1", "3", "2"}},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		test.editMode = true
+		test.scrape = scrapeEditPage
+		runTest(test, t)
+	}
+}
 
 func runTest(test test, t *testing.T) {
 	t.Run(test.name, func(t *testing.T) {
 		data := form{test.title, test.formItems, test.editMode}
+		expected := form{test.title, test.expected, test.editMode}
+		if test.action == "view" || test.action == "edit" {
+			expected = data
+		}
+
 		w := httptest.NewRecorder()
 		r, err := http.NewRequest("POST", "/", makeBody(data, test.action))
 		if err != nil {
@@ -135,7 +264,7 @@ func runTest(test test, t *testing.T) {
 		app.makeForm(w, r)
 		resp := w.Result()
 		scrapped := test.scrape(resp.Body)
-		if !reflect.DeepEqual(data, scrapped) {
+		if !reflect.DeepEqual(expected, scrapped) {
 			t.Errorf("\nrequest(expected):\n%+v\nscrapped(received):\n%+v", data, scrapped)
 		}
 	})
