@@ -22,6 +22,7 @@ func init() {
 		errorLog: log.New(ioutil.Discard, "", 0),
 		infoLog:  log.New(ioutil.Discard, "", 0),
 		tmpl:     tmpl,
+		data:     mock{},
 	}
 }
 
@@ -43,7 +44,7 @@ type test struct {
 	name, action, title string
 	formItems, expected []formItem
 	editMode            bool
-	scrape              func(io.Reader) form
+	scrape              func(io.Reader) makeFormPage
 }
 
 func TestMakeFormPreview(t *testing.T) {
@@ -248,8 +249,8 @@ func TestMakeFormEditActions(t *testing.T) {
 
 func runTest(test test, t *testing.T) {
 	t.Run(test.name, func(t *testing.T) {
-		data := form{test.title, test.formItems, test.editMode}
-		expected := form{test.title, test.expected, test.editMode}
+		data := makeFormPage{test.title, test.formItems, test.editMode}
+		expected := makeFormPage{test.title, test.expected, test.editMode}
 		if test.action == "view" || test.action == "edit" {
 			expected = data
 		}

@@ -5,6 +5,12 @@ import (
 	"runtime/debug"
 )
 
+type makeFormPage struct {
+	Title     string
+	FormItems []formItem
+	EditMode  bool
+}
+
 func (app *application) makeForm(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "POST" {
 		title := r.FormValue("title")
@@ -69,9 +75,15 @@ func (app *application) makeForm(w http.ResponseWriter, r *http.Request) {
 			editMode = true
 		case "view":
 			editMode = false
+			err = app.data.put(1, title, formItems)
+			if err != nil {
+				app.errorLog.Print(err)
+				http.Error(w, "Internal Server Error", 500)
+				return
+			}
 		}
 		// method is POST
-		err = app.tmpl.ExecuteTemplate(w, "layout", form{title, formItems, editMode})
+		err = app.tmpl.ExecuteTemplate(w, "layout", makeFormPage{title, formItems, editMode})
 		if err != nil {
 			app.errorLog.Print(err)
 			http.Error(w, "Internal Server Error", 500)
@@ -80,20 +92,17 @@ func (app *application) makeForm(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// method is not POST
-	formItems := []formItem{
-		{"Order", "select", []string{"Chicken", "Fish", "Pork", "Beef"}},
-		{"Qty", "select", []string{"1", "2", "3"}},
-		{"Chilli packs", "checkbox", nil},
-		{"Disposable cutlery", "checkbox", nil},
-		{"Comments", "text", nil},
-		{"", "text", nil},
-		{"Name", "text", nil},
-		{"Email", "text", nil},
-		{"Contact", "text", nil},
-		{"Delivery address (if any)", "text", nil},
-		{"Self collection", "checkbox", nil},
+	title, formItems, found, err := app.data.get(1)
+	if err != nil {
+		app.errorLog.Print(err)
+		http.Error(w, "Internal Server Error", 500)
+		return
 	}
-	err := app.tmpl.ExecuteTemplate(w, "layout", form{"Lam's BBQ Order Form", formItems, false})
+	if !found {
+		http.Error(w, "Form not found", 404)
+		return
+	}
+	err = app.tmpl.ExecuteTemplate(w, "layout", makeFormPage{title, formItems, false})
 	if err != nil {
 		app.errorLog.Print(err)
 		http.Error(w, "Internal Server Error", 500)

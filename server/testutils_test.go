@@ -9,7 +9,7 @@ import (
 )
 
 // makeBody strings together a form request body e.g key=value&key=value&....
-func makeBody(data form, action string) io.Reader {
+func makeBody(data makeFormPage, action string) io.Reader {
 	body := "action=" + action + "&title=" + data.Title
 	for index, formItem := range data.FormItems {
 		body = body + "&label=" + formItem.Label
@@ -47,24 +47,23 @@ func checkEditMode(t html.Token) bool {
 	for _, attr := range t.Attr {
 		m[attr.Key] = attr.Val
 	}
-
 	_, disabled := m["disabled"]
-	nameAction := m["name"] == "action"
-	editDisabled := m["value"] == "edit" && disabled
-	previewDisabled := m["value"] == "view" && disabled
-
-	if nameAction && editDisabled {
-		return true
+	if m["name"] == "action" && m["value"] == "edit" {
+		if disabled {
+			return true
+		}
 	}
-	if nameAction && !previewDisabled {
-		return true
+	if m["name"] == "action" && m["value"] == "view" {
+		if !disabled {
+			return true
+		}
 	}
 	return false
 }
 
 // scrapePreviewPage screen scrapes the response Body and returns a form struct for test comparison
-func scrapePreviewPage(body io.Reader) form {
-	scraped := form{}
+func scrapePreviewPage(body io.Reader) makeFormPage {
+	scraped := makeFormPage{}
 	processedOptions := false
 	t := html.Token{}
 	z := html.NewTokenizer(body)
@@ -187,8 +186,8 @@ func scrapePreviewPage(body io.Reader) form {
 	return scraped
 }
 
-func scrapeEditPage(body io.Reader) form {
-	scraped := form{}
+func scrapeEditPage(body io.Reader) makeFormPage {
+	scraped := makeFormPage{}
 	processedOptions := false
 	t := html.Token{}
 	z := html.NewTokenizer(body)
@@ -276,4 +275,14 @@ func scrapeEditPage(body io.Reader) form {
 		}
 	}
 	return scraped
+}
+
+type mock struct{}
+
+func (m mock) get(id int) (title string, formItems []formItem, found bool, err error) {
+	return
+}
+
+func (m mock) put(id int, title string, formItems []formItem) error {
+	return nil
 }
