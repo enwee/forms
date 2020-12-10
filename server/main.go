@@ -2,7 +2,6 @@ package main
 
 import (
 	"database/sql"
-	"fmt"
 	"html/template"
 	"log"
 	"net/http"
@@ -70,9 +69,12 @@ func main() {
 		port = "5000"
 	}
 
+	fileServer := http.FileServer(http.Dir("./ui/img"))
+
 	router := http.NewServeMux()
 	router.HandleFunc("/", app.makeForm)
-	fmt.Println("Server starting at port :", port)
+	router.Handle("/favicon.ico", fileServer)
+	infoLog.Println("Server starting at port :", port)
 
 	err = http.ListenAndServe(":"+port, app.handlePanic(router))
 	errorLog.Fatal(err)
