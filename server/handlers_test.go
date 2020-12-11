@@ -9,6 +9,8 @@ import (
 	"net/http/httptest"
 	"reflect"
 	"testing"
+
+	"github.com/julienschmidt/httprouter"
 )
 
 var app application
@@ -256,13 +258,16 @@ func runTest(test test, t *testing.T) {
 		}
 
 		w := httptest.NewRecorder()
-		r, err := http.NewRequest("POST", "/", makeBody(data, test.action))
+		r, err := http.NewRequest("POST", "/1", makeBody(data, test.action))
 		if err != nil {
 			t.Fatal(err)
 		}
 		r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
-		app.makeForm(w, r)
+		router := httprouter.New()
+		router.HandlerFunc("POST", "/:id", app.makeForm)
+		router.ServeHTTP(w, r)
+
 		resp := w.Result()
 		scrapped := test.scrape(resp.Body)
 		if !reflect.DeepEqual(expected, scrapped) {

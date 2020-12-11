@@ -39,7 +39,7 @@ func validateForm(r *http.Request) (formItems []formItem, action, opt string, in
 	}
 
 	action = r.FormValue("action")
-	if action != "edit" && action != "view" {
+	if action != "edit" && action != "view" && action != "change" {
 		if !re.MatchString(action) {
 			err = fmt.Errorf("[%s] invalid action", action)
 			return

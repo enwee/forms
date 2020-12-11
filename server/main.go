@@ -9,11 +9,15 @@ import (
 	"regexp"
 
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/julienschmidt/httprouter"
 )
 
 type data interface {
+	getAll() (forms []formAttr, err error)
+	new() (id int, err error)
+	delete(id int) error
 	get(id int) (title string, formItems []formItem, found bool, err error)
-	put(id int, title string, formItems []formItem) error
+	update(id int, title string, formItems []formItem) error
 }
 
 type database struct {
@@ -69,11 +73,14 @@ func main() {
 		port = "5000"
 	}
 
-	fileServer := http.FileServer(http.Dir("./ui/img"))
+	router := httprouter.New()
+	router.HandlerFunc("GET", "/", app.chooseForm)
+	router.HandlerFunc("GET", "/edit", app.chooseForm)
+	router.HandlerFunc("POST", "/edit", app.addRemForm)
+	router.HandlerFunc("GET", "/edit/:id", app.getForm)
+	router.HandlerFunc("POST", "/edit/:id", app.makeForm)
+	router.HandlerFunc("GET", "/favicon.ico", app.favicon)
 
-	router := http.NewServeMux()
-	router.HandleFunc("/", app.makeForm)
-	router.Handle("/favicon.ico", fileServer)
 	infoLog.Println("Server starting at port :", port)
 
 	err = http.ListenAndServe(":"+port, app.handlePanic(router))

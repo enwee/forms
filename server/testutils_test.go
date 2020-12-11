@@ -42,23 +42,23 @@ func getAttr(t html.Token, key string) string {
 }
 
 // checkEditMode returns the editMode based on state of Edit/Preview buttons
-func checkEditMode(t html.Token) bool {
+func checkEditMode(t html.Token, editMode bool) bool {
 	m := map[string]string{}
 	for _, attr := range t.Attr {
 		m[attr.Key] = attr.Val
 	}
 	_, disabled := m["disabled"]
-	if m["name"] == "action" && m["value"] == "edit" {
-		if disabled {
-			return true
-		}
-	}
 	if m["name"] == "action" && m["value"] == "view" {
 		if !disabled {
-			return true
+			editMode = true
 		}
 	}
-	return false
+	if m["name"] == "action" && m["value"] == "edit" {
+		if disabled {
+			editMode = true
+		}
+	}
+	return editMode
 }
 
 // scrapePreviewPage screen scrapes the response Body and returns a form struct for test comparison
@@ -75,7 +75,7 @@ func scrapePreviewPage(body io.Reader) makeFormPage {
 			break
 		}
 		if t.Type == html.StartTagToken && t.Data == "button" {
-			scraped.EditMode = checkEditMode(t)
+			scraped.EditMode = checkEditMode(t, scraped.EditMode)
 			continue
 		}
 		if t.Type == html.StartTagToken && t.Data == "h1" {
@@ -199,7 +199,7 @@ func scrapeEditPage(body io.Reader) makeFormPage {
 			break
 		}
 		if t.Type == html.StartTagToken && t.Data == "button" {
-			scraped.EditMode = checkEditMode(t)
+			scraped.EditMode = checkEditMode(t, scraped.EditMode)
 			continue
 		}
 		if t.Type == html.StartTagToken && t.Data == "h1" {
@@ -283,6 +283,18 @@ func (m mock) get(id int) (title string, formItems []formItem, found bool, err e
 	return
 }
 
-func (m mock) put(id int, title string, formItems []formItem) error {
+func (m mock) update(id int, title string, formItems []formItem) error {
+	return nil
+}
+
+func (m mock) getAll() (forms []formAttr, err error) {
+	return
+}
+
+func (m mock) new() (id int, err error) {
+	return
+}
+
+func (m mock) delete(id int) error {
 	return nil
 }
