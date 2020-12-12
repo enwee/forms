@@ -9,7 +9,6 @@ import (
 	"regexp"
 
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/julienschmidt/httprouter"
 )
 
 type data interface {
@@ -54,9 +53,7 @@ func main() {
 	}
 	defer db.Close()
 
-	tmpl, err := template.New("").
-		Funcs(template.FuncMap{"minus1": minus1}).
-		ParseGlob("./ui/html/*.tmpl")
+	tmpl, err := template.New("").Funcs(template.FuncMap{"minus1": minus1}).ParseGlob("./ui/html/*.tmpl")
 	if err != nil {
 		errorLog.Fatal(err)
 	}
@@ -73,16 +70,8 @@ func main() {
 		port = "5000"
 	}
 
-	router := httprouter.New()
-	router.HandlerFunc("GET", "/", app.chooseForm)
-	router.HandlerFunc("GET", "/edit", app.chooseForm)
-	router.HandlerFunc("POST", "/edit", app.addRemForm)
-	router.HandlerFunc("GET", "/edit/:id", app.getForm)
-	router.HandlerFunc("POST", "/edit/:id", app.makeForm)
-	router.HandlerFunc("GET", "/favicon.ico", app.favicon)
-
 	infoLog.Println("Server starting at port :", port)
 
-	err = http.ListenAndServe(":"+port, app.handlePanic(router))
+	err = http.ListenAndServe(":"+port, app.routes())
 	errorLog.Fatal(err)
 }

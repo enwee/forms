@@ -2,7 +2,6 @@ package main
 
 import (
 	"net/http"
-	"runtime/debug"
 	"strconv"
 
 	"github.com/julienschmidt/httprouter"
@@ -24,13 +23,13 @@ func (app *application) chooseForm(w http.ResponseWriter, r *http.Request) {
 	forms, err := app.data.getAll()
 	if err != nil {
 		app.errorLog.Print(err)
-		http.Error(w, "Internal Server Error", 500)
+		http.Error(w, "500 Internal Server Error", 500)
 		return
 	}
 	err = app.tmpl.ExecuteTemplate(w, "choose", forms)
 	if err != nil {
 		app.errorLog.Print(err)
-		http.Error(w, "Internal Server Error", 500)
+		http.Error(w, "500 Internal Server Error", 500)
 		return
 	}
 }
@@ -44,7 +43,7 @@ func (app *application) addRemForm(w http.ResponseWriter, r *http.Request) {
 		action, id, err = getAction(action)
 		if err != nil {
 			app.errorLog.Print(err)
-			http.Error(w, "Invalid data", 400)
+			http.Error(w, "400 Invalid data", 400)
 			return
 		}
 	}
@@ -54,14 +53,14 @@ func (app *application) addRemForm(w http.ResponseWriter, r *http.Request) {
 		_, err := app.data.new()
 		if err != nil {
 			app.errorLog.Print(err)
-			http.Error(w, "Internal Server Error", 500)
+			http.Error(w, "500 Internal Server Error", 500)
 			return
 		}
 	case "del":
 		err = app.data.delete(id)
 		if err != nil {
 			app.errorLog.Print(err)
-			http.Error(w, "Internal Server Error", 500)
+			http.Error(w, "500 Internal Server Error", 500)
 			return
 		}
 	}
@@ -73,23 +72,24 @@ func (app *application) getForm(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.Atoi(httprouter.ParamsFromContext(r.Context()).ByName("id"))
 	if err != nil {
 		app.errorLog.Print(err)
-		http.Error(w, "Invalid data", 400)
+		http.Error(w, "400 Invalid data", 400)
 		return
 	}
 	title, formItems, found, err := app.data.get(id)
 	if err != nil {
 		app.errorLog.Print(err)
-		http.Error(w, "Internal Server Error", 500)
+		http.Error(w, "500 Internal Server Error", 500)
 		return
 	}
 	if !found {
-		http.Error(w, "Form not found", 404)
+		app.errorLog.Printf("form id:%v not found", id)
+		http.Error(w, "404 Form not found", 404)
 		return
 	}
 	err = app.tmpl.ExecuteTemplate(w, "form", makeFormPage{title, formItems, false})
 	if err != nil {
 		app.errorLog.Print(err)
-		http.Error(w, "Internal Server Error", 500)
+		http.Error(w, "500 Internal Server Error", 500)
 		return
 	}
 }
@@ -98,7 +98,7 @@ func (app *application) makeForm(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.Atoi(httprouter.ParamsFromContext(r.Context()).ByName("id"))
 	if err != nil {
 		app.errorLog.Print(err)
-		http.Error(w, "Invalid data", 400)
+		http.Error(w, "400 Invalid data", 400)
 		return
 	}
 	title := r.FormValue("title")
@@ -106,7 +106,7 @@ func (app *application) makeForm(w http.ResponseWriter, r *http.Request) {
 	formItems, action, opt, index, idx, err := validateForm(r)
 	if err != nil {
 		app.errorLog.Print(err)
-		http.Error(w, "Invalid data", 400)
+		http.Error(w, "400 Invalid data", 400)
 		return
 	}
 
@@ -166,7 +166,7 @@ func (app *application) makeForm(w http.ResponseWriter, r *http.Request) {
 		err = app.data.update(id, title, formItems)
 		if err != nil {
 			app.errorLog.Print(err)
-			http.Error(w, "Internal Server Error", 500)
+			http.Error(w, "500 Internal Server Error", 500)
 			return
 		}
 	case "change":
@@ -176,25 +176,15 @@ func (app *application) makeForm(w http.ResponseWriter, r *http.Request) {
 	err = app.tmpl.ExecuteTemplate(w, "form", makeFormPage{title, formItems, editMode})
 	if err != nil {
 		app.errorLog.Print(err)
-		http.Error(w, "Internal Server Error", 500)
+		http.Error(w, "500 Internal Server Error", 500)
 		return
 	}
 }
 
-func (app *application) handlePanic(next http.Handler) http.Handler {
-	fn := func(w http.ResponseWriter, r *http.Request) {
-		defer func() {
-			err := recover()
-			if err != nil {
-				app.errorLog.Println(err, string(debug.Stack()))
-				http.Error(w, "Internal Server Error", 500)
-			}
-		}()
-		next.ServeHTTP(w, r)
-	}
-	return http.HandlerFunc(fn)
-}
-
 func (app *application) favicon(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, "./ui/img/favicon.ico")
+}
+
+func (app *application) style(w http.ResponseWriter, r *http.Request) {
+	http.ServeFile(w, r, "./ui/css/style.css")
 }
