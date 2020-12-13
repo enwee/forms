@@ -12,7 +12,7 @@ import (
 )
 
 type data interface {
-	getAll() (forms []formAttr, err error)
+	getAll() (forms []chooseFormPageItem, err error)
 	new() (id int, err error)
 	delete(id int) error
 	get(id int) (title string, formItems []formItem, found bool, err error)

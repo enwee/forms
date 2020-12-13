@@ -287,7 +287,7 @@ func (m mock) update(id int, title string, formItems []formItem) error {
 	return nil
 }
 
-func (m mock) getAll() (forms []formAttr, err error) {
+func (m mock) getAll() (forms []chooseFormPageItem, err error) {
 	return
 }
 

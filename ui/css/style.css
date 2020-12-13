@@ -1,3 +1,7 @@
 body {
     width: max-content;
 }
+
+.error {
+    color: red;
+}

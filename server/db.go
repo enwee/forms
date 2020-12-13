@@ -6,7 +6,7 @@ import (
 	"errors"
 )
 
-func (db database) getAll() (forms []formAttr, err error) {
+func (db database) getAll() (forms []chooseFormPageItem, err error) {
 	q := `SELECT id, title, updated FROM forms`
 	rows, err := db.Query(q)
 	if err != nil {
@@ -15,7 +15,7 @@ func (db database) getAll() (forms []formAttr, err error) {
 	defer rows.Close()
 
 	for rows.Next() {
-		form := formAttr{}
+		form := chooseFormPageItem{}
 		err = rows.Scan(&form.ID, &form.Title, &form.Updated)
 		if err != nil {
 			return nil, err
@@ -50,9 +50,10 @@ func (db database) get(id int) (title string, formItems []formItem, found bool, 
 }
 
 func (db database) new() (id int, err error) {
-	q := `INSERT INTO forms (title, formitems, updated) VALUES 
-	("New Form", '[{"Label":"Text box","Type":"text","Options":null},{"Label":"Check box","Type":"checkbox","Options":null},{"Label":"Drop down select","Type":"select","Options":["option1","option2"]}]', NOW())`
-	r, err := db.Exec(q)
+	newFormItemsJSON := `[{"Label":"Text box","Type":"text","Options":null},{"Label":"Check box","Type":"checkbox","Options":null},{"Label":"Drop down select","Type":"select","Options":["option1","option2"]}]`
+
+	q := `INSERT INTO forms (title, formitems, updated) VALUES ("New Form", ?, NOW())`
+	r, err := db.Exec(q, newFormItemsJSON)
 	if err != nil {
 		return 0, err
 	}

@@ -57,11 +57,6 @@ func TestMakeFormPreview(t *testing.T) {
 			formItems: baseWithEmptyLabel,
 		},
 		{
-			name:      "Empty Title",
-			title:     "",
-			formItems: baseWithEmptyLabel,
-		},
-		{
 			name:  "Empty Option",
 			title: "Lam's",
 			formItems: []formItem{
@@ -251,8 +246,8 @@ func TestMakeFormEditActions(t *testing.T) {
 
 func runTest(test test, t *testing.T) {
 	t.Run(test.name, func(t *testing.T) {
-		data := makeFormPage{test.title, test.formItems, test.editMode}
-		expected := makeFormPage{test.title, test.expected, test.editMode}
+		data := makeFormPage{test.title, "", test.formItems, test.editMode}
+		expected := makeFormPage{test.title, "", test.expected, test.editMode}
 		if test.action == "view" || test.action == "edit" {
 			expected = data
 		}

@@ -7,7 +7,7 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
-type formAttr struct {
+type chooseFormPageItem struct {
 	ID      int
 	Title   string
 	Updated string
@@ -15,6 +15,7 @@ type formAttr struct {
 
 type makeFormPage struct {
 	Title     string
+	TitleErr  string
 	FormItems []formItem
 	EditMode  bool
 }
@@ -86,7 +87,7 @@ func (app *application) getForm(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "404 Form not found", 404)
 		return
 	}
-	err = app.tmpl.ExecuteTemplate(w, "form", makeFormPage{title, formItems, false})
+	err = app.tmpl.ExecuteTemplate(w, "form", makeFormPage{title, "", formItems, false})
 	if err != nil {
 		app.errorLog.Print(err)
 		http.Error(w, "500 Internal Server Error", 500)
@@ -101,8 +102,8 @@ func (app *application) makeForm(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "400 Invalid data", 400)
 		return
 	}
-	title := r.FormValue("title")
 	editMode := true
+	title, titleErr := validateTitle(r)
 	formItems, action, opt, index, idx, err := validateForm(r)
 	if err != nil {
 		app.errorLog.Print(err)
@@ -160,8 +161,11 @@ func (app *application) makeForm(w http.ResponseWriter, r *http.Request) {
 		formItems[index].Type = "select"
 		formItems[index].Options = []string{""}
 	case "edit":
-		editMode = true
+		editMode = true // does nothing, editMode=true is the default
 	case "view":
+		if titleErr != "" {
+			break
+		}
 		editMode = false
 		err = app.data.update(id, title, formItems)
 		if err != nil {
@@ -173,7 +177,7 @@ func (app *application) makeForm(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/edit", http.StatusSeeOther)
 		return
 	}
-	err = app.tmpl.ExecuteTemplate(w, "form", makeFormPage{title, formItems, editMode})
+	err = app.tmpl.ExecuteTemplate(w, "form", makeFormPage{title, titleErr, formItems, editMode})
 	if err != nil {
 		app.errorLog.Print(err)
 		http.Error(w, "500 Internal Server Error", 500)
