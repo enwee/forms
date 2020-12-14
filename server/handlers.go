@@ -13,7 +13,7 @@ type chooseFormPageItem struct {
 	Updated string
 }
 
-type makeFormPage struct {
+type editFormPage struct {
 	Title     string
 	TitleErr  string
 	FormItems []formItem
@@ -69,7 +69,7 @@ func (app *application) addRemForm(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/edit", http.StatusSeeOther)
 }
 
-func (app *application) getForm(w http.ResponseWriter, r *http.Request) {
+func (app *application) viewForm(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.Atoi(httprouter.ParamsFromContext(r.Context()).ByName("id"))
 	if err != nil {
 		app.errorLog.Print(err)
@@ -87,7 +87,7 @@ func (app *application) getForm(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "404 Form not found", 404)
 		return
 	}
-	err = app.tmpl.ExecuteTemplate(w, "form", makeFormPage{title, "", formItems, false})
+	err = app.tmpl.ExecuteTemplate(w, "form", editFormPage{title, "", formItems, false})
 	if err != nil {
 		app.errorLog.Print(err)
 		http.Error(w, "500 Internal Server Error", 500)
@@ -95,7 +95,7 @@ func (app *application) getForm(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (app *application) makeForm(w http.ResponseWriter, r *http.Request) {
+func (app *application) editForm(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.Atoi(httprouter.ParamsFromContext(r.Context()).ByName("id"))
 	if err != nil {
 		app.errorLog.Print(err)
@@ -177,12 +177,42 @@ func (app *application) makeForm(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/edit", http.StatusSeeOther)
 		return
 	}
-	err = app.tmpl.ExecuteTemplate(w, "form", makeFormPage{title, titleErr, formItems, editMode})
+	err = app.tmpl.ExecuteTemplate(w, "form", editFormPage{title, titleErr, formItems, editMode})
 	if err != nil {
 		app.errorLog.Print(err)
 		http.Error(w, "500 Internal Server Error", 500)
 		return
 	}
+}
+
+func (app *application) useForm(w http.ResponseWriter, r *http.Request) {
+	id, err := strconv.Atoi(httprouter.ParamsFromContext(r.Context()).ByName("id"))
+	if err != nil {
+		app.errorLog.Print(err)
+		http.Error(w, "400 Invalid data", 400)
+		return
+	}
+	title, formItems, found, err := app.data.get(id)
+	if err != nil {
+		app.errorLog.Print(err)
+		http.Error(w, "500 Internal Server Error", 500)
+		return
+	}
+	if !found {
+		app.errorLog.Printf("form id:%v not found", id)
+		http.Error(w, "404 Form not found", 404)
+		return
+	}
+	err = app.tmpl.ExecuteTemplate(w, "form.use", editFormPage{title, "", formItems, false})
+	if err != nil {
+		app.errorLog.Print(err)
+		http.Error(w, "500 Internal Server Error", 500)
+		return
+	}
+}
+
+func (app *application) home(w http.ResponseWriter, r *http.Request) {
+	http.Redirect(w, r, "/edit", 303)
 }
 
 func (app *application) favicon(w http.ResponseWriter, r *http.Request) {

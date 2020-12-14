@@ -2,6 +2,12 @@ body {
     width: max-content;
 }
 
+.form{
+    padding: 0rem 1rem 1rem 1rem;
+    border: 1px solid black;
+    margin: 0.25rem;
+}
+
 .error {
     color: red;
 }

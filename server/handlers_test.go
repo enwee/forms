@@ -46,10 +46,10 @@ type test struct {
 	name, action, title string
 	formItems, expected []formItem
 	editMode            bool
-	scrape              func(io.Reader) makeFormPage
+	scrape              func(io.Reader) editFormPage
 }
 
-func TestMakeFormPreview(t *testing.T) {
+func TestViewFormLayout(t *testing.T) {
 	tests := []test{
 		{
 			name:      "Empty Label",
@@ -77,12 +77,12 @@ func TestMakeFormPreview(t *testing.T) {
 	for _, test := range tests {
 		test.action = "view"
 		test.editMode = false
-		test.scrape = scrapePreviewPage
+		test.scrape = scrapeViewForm
 		runTest(test, t)
 	}
 }
 
-func TestMakeFormEditView(t *testing.T) {
+func TestEditFormLayout(t *testing.T) {
 	tests := []test{
 		{
 			name:      "Empty Label",
@@ -115,11 +115,11 @@ func TestMakeFormEditView(t *testing.T) {
 	for _, test := range tests {
 		test.action = "edit"
 		test.editMode = true
-		test.scrape = scrapeEditPage
+		test.scrape = scrapeEditForm
 		runTest(test, t)
 	}
 }
-func TestMakeFormEditActions(t *testing.T) {
+func TestEditFormActions(t *testing.T) {
 	tests := []test{
 		{
 			name:   "Add form item",
@@ -239,28 +239,28 @@ func TestMakeFormEditActions(t *testing.T) {
 
 	for _, test := range tests {
 		test.editMode = true
-		test.scrape = scrapeEditPage
+		test.scrape = scrapeEditForm
 		runTest(test, t)
 	}
 }
 
 func runTest(test test, t *testing.T) {
 	t.Run(test.name, func(t *testing.T) {
-		data := makeFormPage{test.title, "", test.formItems, test.editMode}
-		expected := makeFormPage{test.title, "", test.expected, test.editMode}
+		data := editFormPage{test.title, "", test.formItems, test.editMode}
+		expected := editFormPage{test.title, "", test.expected, test.editMode}
 		if test.action == "view" || test.action == "edit" {
 			expected = data
 		}
 
 		w := httptest.NewRecorder()
-		r, err := http.NewRequest("POST", "/1", makeBody(data, test.action))
+		r, err := http.NewRequest("POST", "/1", makePostBody(data, test.action))
 		if err != nil {
 			t.Fatal(err)
 		}
 		r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 		router := httprouter.New()
-		router.HandlerFunc("POST", "/:id", app.makeForm)
+		router.HandlerFunc("POST", "/:id", app.editForm)
 		router.ServeHTTP(w, r)
 
 		resp := w.Result()

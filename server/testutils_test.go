@@ -8,8 +8,8 @@ import (
 	"golang.org/x/net/html"
 )
 
-// makeBody strings together a form request body e.g key=value&key=value&....
-func makeBody(data makeFormPage, action string) io.Reader {
+// makePostBody strings together a form request body e.g key=value&key=value&....
+func makePostBody(data editFormPage, action string) io.Reader {
 	body := "action=" + action + "&title=" + data.Title
 	for index, formItem := range data.FormItems {
 		body = body + "&label=" + formItem.Label
@@ -61,9 +61,9 @@ func checkEditMode(t html.Token, editMode bool) bool {
 	return editMode
 }
 
-// scrapePreviewPage screen scrapes the response Body and returns a form struct for test comparison
-func scrapePreviewPage(body io.Reader) makeFormPage {
-	scraped := makeFormPage{}
+// scrapeViewForm screen scrapes the response Body and returns a form struct for test comparison
+func scrapeViewForm(body io.Reader) editFormPage {
+	scraped := editFormPage{}
 	processedOptions := false
 	t := html.Token{}
 	z := html.NewTokenizer(body)
@@ -186,8 +186,8 @@ func scrapePreviewPage(body io.Reader) makeFormPage {
 	return scraped
 }
 
-func scrapeEditPage(body io.Reader) makeFormPage {
-	scraped := makeFormPage{}
+func scrapeEditForm(body io.Reader) editFormPage {
+	scraped := editFormPage{}
 	processedOptions := false
 	t := html.Token{}
 	z := html.NewTokenizer(body)

@@ -4,7 +4,6 @@
         <button name="action" value="change">Choose Form</button>
         <button name="action" value="edit" {{if .EditMode}}disabled{{end}}>Edit Form</button>
         <button name="action" value="view" {{if not .EditMode}}disabled{{end}}>Save / View</button>
-        <br>
         {{if .EditMode}}
             {{template "form.edit" .}}
         {{else}}
