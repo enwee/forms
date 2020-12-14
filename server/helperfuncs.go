@@ -6,6 +6,8 @@ import (
 	"strconv"
 	"strings"
 	"unicode/utf8"
+
+	"forms/models"
 )
 
 func getAction(action string) (string, int, error) {
@@ -32,7 +34,7 @@ func validateTitle(r *http.Request) (title, titleErr string) {
 	return
 }
 
-func validateForm(r *http.Request) (formItems []formItem, action, opt string, index, idx int, err error) {
+func validateForm(r *http.Request) (formItems []models.FormItem, action, opt string, index, idx int, err error) {
 	labels := r.Form["label"] // will get []string(nil) if doesnt exist
 	inputType := r.Form["type"]
 	if len(labels) != len(inputType) { // len([]string(nil) will be  0)
@@ -52,7 +54,7 @@ func validateForm(r *http.Request) (formItems []formItem, action, opt string, in
 				options = append(options, option)
 			}
 		}
-		formItems = append(formItems, formItem{label, inputType[i], options})
+		formItems = append(formItems, models.FormItem{Label: label, Type: inputType[i], Options: options})
 	}
 
 	action = r.FormValue("action")

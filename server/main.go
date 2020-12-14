@@ -8,39 +8,37 @@ import (
 	"os"
 	"regexp"
 
+	"forms/models"
+
 	_ "github.com/go-sql-driver/mysql"
 )
 
-type data interface {
-	getAll() (forms []chooseFormPageItem, err error)
-	new() (id int, err error)
-	delete(id int) error
-	get(id int) (title string, formItems []formItem, found bool, err error)
-	update(id int, title string, formItems []formItem) error
-}
-
-type database struct {
-	*sql.DB
+type form interface {
+	GetAll() (forms []models.Form, err error)
+	New() (id int, err error)
+	Delete(id int) error
+	Get(id int) (title string, formItems []models.FormItem, found bool, err error)
+	Update(id int, title string, formItems []models.FormItem) error
 }
 
 type application struct {
 	errorLog *log.Logger
 	infoLog  *log.Logger
-	data
+	form
 	tmpl *template.Template
 }
 
-type formItem struct {
-	Label   string
-	Type    string
-	Options []string
-}
-
+// look into unglobalizing this
 var re = regexp.MustCompile(`(^(add|del|upp|dwn|txt|cxb|sel)\d+$|^opt\d+ (add|del|upp|dwn)\d+$)`)
 
 func main() {
 	errorLog := log.New(os.Stderr, "error:\t", log.LstdFlags|log.Lshortfile)
 	infoLog := log.New(os.Stderr, "info:\t", log.LstdFlags)
+
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "5000"
+	}
 
 	dsn := os.Getenv("DSN")
 	if dsn == "" {
@@ -61,17 +59,23 @@ func main() {
 	app := &application{
 		errorLog: errorLog,
 		infoLog:  infoLog,
-		data:     database{db},
+		form:     models.FormDB{DB: db},
 		tmpl:     tmpl,
 	}
 
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "5000"
-	}
-
 	infoLog.Println("Server starting at port :", port)
-
 	err = http.ListenAndServe(":"+port, app.routes())
 	errorLog.Fatal(err)
+}
+
+func openDB(dsn string) (*sql.DB, error) {
+	db, err := sql.Open("mysql", dsn)
+	if err != nil {
+		return nil, err
+	}
+
+	if err = db.Ping(); err != nil {
+		return nil, err
+	}
+	return db, nil
 }

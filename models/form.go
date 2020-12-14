@@ -1,4 +1,4 @@
-package main
+package models
 
 import (
 	"database/sql"
@@ -6,7 +6,13 @@ import (
 	"errors"
 )
 
-func (db database) getAll() (forms []chooseFormPageItem, err error) {
+// FormDB comment
+type FormDB struct {
+	*sql.DB
+}
+
+// GetAll comment
+func (db FormDB) GetAll() (forms []Form, err error) {
 	q := `SELECT id, title, updated FROM forms`
 	rows, err := db.Query(q)
 	if err != nil {
@@ -15,7 +21,7 @@ func (db database) getAll() (forms []chooseFormPageItem, err error) {
 	defer rows.Close()
 
 	for rows.Next() {
-		form := chooseFormPageItem{}
+		form := Form{}
 		err = rows.Scan(&form.ID, &form.Title, &form.Updated)
 		if err != nil {
 			return nil, err
@@ -28,7 +34,8 @@ func (db database) getAll() (forms []chooseFormPageItem, err error) {
 	return forms, nil
 }
 
-func (db database) get(id int) (title string, formItems []formItem, found bool, err error) {
+// Get comment
+func (db FormDB) Get(id int) (title string, formItems []FormItem, found bool, err error) {
 	formItemsJSON := ""
 	q := `SELECT title, formitems FROM forms WHERE id=?`
 	row := db.QueryRow(q, id)
@@ -49,7 +56,8 @@ func (db database) get(id int) (title string, formItems []formItem, found bool, 
 	return
 }
 
-func (db database) new() (id int, err error) {
+// New comment
+func (db FormDB) New() (id int, err error) {
 	newFormItemsJSON := `[{"Label":"Text box","Type":"text","Options":null},{"Label":"Check box","Type":"checkbox","Options":null},{"Label":"Drop down select","Type":"select","Options":["option1","option2"]}]`
 
 	q := `INSERT INTO forms (title, formitems, updated) VALUES ("New Form", ?, NOW())`
@@ -64,7 +72,8 @@ func (db database) new() (id int, err error) {
 	return int(formID), nil
 }
 
-func (db database) delete(id int) error {
+// Delete comment
+func (db FormDB) Delete(id int) error {
 	q := `DELETE FROM forms where id=?`
 	_, err := db.Exec(q, id)
 	if err != nil {
@@ -73,7 +82,8 @@ func (db database) delete(id int) error {
 	return nil
 }
 
-func (db database) update(id int, title string, formItems []formItem) error {
+// Update comment
+func (db FormDB) Update(id int, title string, formItems []FormItem) error {
 	b, err := json.Marshal(formItems)
 	if err != nil {
 		return err
@@ -86,16 +96,4 @@ func (db database) update(id int, title string, formItems []formItem) error {
 		return err
 	}
 	return nil
-}
-
-func openDB(dsn string) (*sql.DB, error) {
-	db, err := sql.Open("mysql", dsn)
-	if err != nil {
-		return nil, err
-	}
-
-	if err = db.Ping(); err != nil {
-		return nil, err
-	}
-	return db, nil
 }
