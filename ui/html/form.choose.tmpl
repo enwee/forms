@@ -1,15 +1,12 @@
-{{define "choose"}}
-    {{template "html.start" .}}
-
+{{define "form.choose"}}
     <h1>Choose a form</h1>
     <form method="POST">
         <dl>
-        {{range .}}
+        {{range .Forms}}
             <dt><a href="edit/{{.ID}}">{{.Title}}</a></dt>
-            <dd><i>last updated {{.Updated}}</i> <button name="action" value="del{{.ID}}">❌</button></dd>
+            <dd><em>last updated {{.Updated}}</em> <button name="action" value="del{{.ID}}">❌</button></dd>
         {{end}}
         </dl>
         <button name="action" value="add">➕ New Form</button>
     </form>
-    {{template "html.end" .}}
 {{end}}

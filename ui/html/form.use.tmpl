@@ -1,7 +1,22 @@
 {{define "form.use"}}
     {{template "html.start" .}}
     <form method="POST">
-        {{template "form.view" .}}
+        <div class="form">
+            <h1>{{.Title}}</h1>
+            {{range $index, $_ := .FormItems}}
+                <label>{{.Label}}</label>
+                {{if .Label}}
+                    {{if eq .Type "select"}}
+                        <select>{{range .Options}}<option>{{.}}</option>{{end}}</select>
+                    {{else}}<input type={{.Type}}>{{end}}
+                {{end}}
+                <br>
+            {{end}}
+            <br>
+            <button type="button">Send</button>
+        </div>
     </form>
+    <br>
+    <em class="error">Form submission WIP, Comming Soon!</em>
     {{template "html.end" .}}
 {{end}}

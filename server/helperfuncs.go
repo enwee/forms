@@ -23,6 +23,16 @@ func minus1(x int) int {
 	return x - 1
 }
 
+func validateUsername(username string) (err string) {
+	if username == "" {
+		return "user name cannot be blank"
+	}
+	if len(username) > 8 {
+		return "user name too long (max 8 characters)"
+	}
+	return ""
+}
+
 func validateTitle(r *http.Request) (title, titleErr string) {
 	title = strings.TrimSpace(r.FormValue("title"))
 	if title == "" {
@@ -58,7 +68,7 @@ func validateForm(r *http.Request) (formItems []models.FormItem, action, opt str
 	}
 
 	action = r.FormValue("action")
-	if !stringIs(action, "edit", "view", "change") {
+	if !stringIs(action, "edit", "view", "choose", "auth") {
 		if !re.MatchString(action) {
 			err = fmt.Errorf("[%s] invalid action", action)
 			return

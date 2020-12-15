@@ -9,21 +9,42 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
+const (
+	unimplementedMode = iota
+	chooseMode
+	editMode
+	viewMode
+	demoMode
+)
+
 type formPage struct {
 	Title     string
 	TitleErr  string // to change this to Err []string for other Errs can use {{with X}} action
 	FormItems []models.FormItem
-	EditMode  bool
+	PageMode  int
+	Userid    int
+	Formid    int
 }
 
 func (app *application) chooseForm(w http.ResponseWriter, r *http.Request) {
-	forms, err := app.form.GetAll()
+	userid := r.Context().Value(userID("userid")).(int)
+	if userid == 0 {
+		http.Redirect(w, r, "/", 303)
+		return
+	}
+
+	forms, err := app.form.GetAll(userid)
 	if err != nil {
 		app.errorLog.Print(err)
 		http.Error(w, "500 Internal Server Error", 500)
 		return
 	}
-	err = app.tmpl.ExecuteTemplate(w, "choose", forms)
+	pageData := struct {
+		Forms    []models.Form
+		PageMode int
+		Userid   int
+	}{forms, chooseMode, userid}
+	err = app.tmpl.ExecuteTemplate(w, "form", pageData)
 	if err != nil {
 		app.errorLog.Print(err)
 		http.Error(w, "500 Internal Server Error", 500)
@@ -32,11 +53,17 @@ func (app *application) chooseForm(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *application) addRemForm(w http.ResponseWriter, r *http.Request) {
+	userid := r.Context().Value(userID("userid")).(int)
+	if userid == 0 {
+		http.Redirect(w, r, "/", 303)
+		return
+	}
+
 	action := r.FormValue("action")
 	var id int
 	var err error
 
-	if action != "add" {
+	if !stringIs(action, "add", "auth") {
 		action, id, err = getAction(action)
 		if err != nil {
 			app.errorLog.Print(err)
@@ -47,32 +74,46 @@ func (app *application) addRemForm(w http.ResponseWriter, r *http.Request) {
 
 	switch action {
 	case "add":
-		_, err := app.form.New()
+		_, err := app.form.New(userid)
 		if err != nil {
 			app.errorLog.Print(err)
 			http.Error(w, "500 Internal Server Error", 500)
 			return
 		}
 	case "del":
-		err = app.form.Delete(id)
+		err = app.form.Delete(id, userid)
 		if err != nil {
 			app.errorLog.Print(err)
 			http.Error(w, "500 Internal Server Error", 500)
 			return
 		}
+	case "auth":
+		if userid == 0 {
+			http.Redirect(w, r, "/", 303)
+			return
+		}
+		http.Redirect(w, r, "/logout", 303)
+		return
 	}
 
 	http.Redirect(w, r, "/edit", http.StatusSeeOther)
 }
 
 func (app *application) viewForm(w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.Atoi(httprouter.ParamsFromContext(r.Context()).ByName("id"))
+	var id int
+	var err error
+	userid := r.Context().Value(userID("userid")).(int)
+	if userid == 0 {
+		id = 1 // demo form id
+	} else {
+		id, err = strconv.Atoi(httprouter.ParamsFromContext(r.Context()).ByName("id"))
+	}
 	if err != nil {
 		app.errorLog.Print(err)
 		http.Error(w, "400 Invalid data", 400)
 		return
 	}
-	title, formItems, found, err := app.form.Get(id)
+	title, formItems, found, err := app.form.Get(id, userid)
 	if err != nil {
 		app.errorLog.Print(err)
 		http.Error(w, "500 Internal Server Error", 500)
@@ -83,7 +124,7 @@ func (app *application) viewForm(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "404 Form not found", 404)
 		return
 	}
-	err = app.tmpl.ExecuteTemplate(w, "form", formPage{title, "", formItems, false})
+	err = app.tmpl.ExecuteTemplate(w, "form", formPage{title, "", formItems, viewMode, userid, id})
 	if err != nil {
 		app.errorLog.Print(err)
 		http.Error(w, "500 Internal Server Error", 500)
@@ -92,13 +133,14 @@ func (app *application) viewForm(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *application) editForm(w http.ResponseWriter, r *http.Request) {
+	userid := r.Context().Value(userID("userid")).(int)
 	id, err := strconv.Atoi(httprouter.ParamsFromContext(r.Context()).ByName("id"))
 	if err != nil {
 		app.errorLog.Print(err)
 		http.Error(w, "400 Invalid data", 400)
 		return
 	}
-	editMode := true
+	pageMode := editMode
 	title, titleErr := validateTitle(r)
 	formItems, action, opt, index, idx, err := validateForm(r)
 	if err != nil {
@@ -157,24 +199,34 @@ func (app *application) editForm(w http.ResponseWriter, r *http.Request) {
 		formItems[index].Type = "select"
 		formItems[index].Options = []string{""}
 	case "edit":
-		editMode = true // does nothing, editMode=true is the default
+		pageMode = editMode // does nothing, editMode is the default
 	case "view":
 		if titleErr != "" {
 			break
 		}
-		editMode = false
-		err = app.form.Update(id, title, formItems)
+		pageMode = viewMode
+		if userid == 0 {
+			break
+		}
+		err = app.form.Update(id, userid, title, formItems)
 		if err != nil {
 			app.errorLog.Print(err)
 			http.Error(w, "500 Internal Server Error", 500)
 			return
 		}
-	case "change":
+	case "choose":
 		http.Redirect(w, r, "/edit", http.StatusSeeOther)
+		return
+	case "auth":
+		if userid == 0 {
+			http.Redirect(w, r, "/login", 303)
+			return
+		}
+		http.Redirect(w, r, "/logout", 303)
 		return
 	}
 
-	err = app.tmpl.ExecuteTemplate(w, "form", formPage{title, titleErr, formItems, editMode})
+	err = app.tmpl.ExecuteTemplate(w, "form", formPage{title, titleErr, formItems, pageMode, userid, id})
 	if err != nil {
 		app.errorLog.Print(err)
 		http.Error(w, "500 Internal Server Error", 500)
@@ -189,7 +241,7 @@ func (app *application) useForm(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "400 Invalid data", 400)
 		return
 	}
-	title, formItems, found, err := app.form.Get(id)
+	title, formItems, found, err := app.form.Use(id)
 	if err != nil {
 		app.errorLog.Print(err)
 		http.Error(w, "500 Internal Server Error", 500)
@@ -200,7 +252,7 @@ func (app *application) useForm(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "404 Form not found", 404)
 		return
 	}
-	err = app.tmpl.ExecuteTemplate(w, "form.use", formPage{title, "", formItems, false})
+	err = app.tmpl.ExecuteTemplate(w, "form.use", formPage{Title: title, FormItems: formItems})
 	if err != nil {
 		app.errorLog.Print(err)
 		http.Error(w, "500 Internal Server Error", 500)

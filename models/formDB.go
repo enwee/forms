@@ -12,9 +12,9 @@ type FormDB struct {
 }
 
 // GetAll comment
-func (db FormDB) GetAll() (forms []Form, err error) {
-	q := `SELECT id, title, updated FROM forms`
-	rows, err := db.Query(q)
+func (db FormDB) GetAll(userid int) (forms []Form, err error) {
+	q := `SELECT id, title, updated FROM forms WHERE userid=?`
+	rows, err := db.Query(q, userid)
 	if err != nil {
 		return nil, err
 	}
@@ -35,10 +35,20 @@ func (db FormDB) GetAll() (forms []Form, err error) {
 }
 
 // Get comment
-func (db FormDB) Get(id int) (title string, formItems []FormItem, found bool, err error) {
-	formItemsJSON := ""
+func (db FormDB) Get(id, userid int) (title string, formItems []FormItem, found bool, err error) {
+	q := `SELECT title, formitems FROM forms WHERE id=? AND userid=?`
+	return db.get(q, id, userid)
+}
+
+// Use comment
+func (db FormDB) Use(id int) (title string, formItems []FormItem, found bool, err error) {
 	q := `SELECT title, formitems FROM forms WHERE id=?`
-	row := db.QueryRow(q, id)
+	return db.get(q, id)
+}
+
+func (db FormDB) get(q string, ids ...interface{}) (title string, formItems []FormItem, found bool, err error) {
+	formItemsJSON := ""
+	row := db.QueryRow(q, ids...)
 	err = row.Scan(&title, &formItemsJSON)
 	if err != nil {
 		if !errors.Is(err, sql.ErrNoRows) {
@@ -57,11 +67,11 @@ func (db FormDB) Get(id int) (title string, formItems []FormItem, found bool, er
 }
 
 // New comment
-func (db FormDB) New() (id int, err error) {
+func (db FormDB) New(userid int) (id int, err error) {
 	newFormItemsJSON := `[{"Label":"Text box","Type":"text","Options":null},{"Label":"Check box","Type":"checkbox","Options":null},{"Label":"Drop down select","Type":"select","Options":["option1","option2"]}]`
 
-	q := `INSERT INTO forms (title, formitems, updated) VALUES ("New Form", ?, NOW())`
-	r, err := db.Exec(q, newFormItemsJSON)
+	q := `INSERT INTO forms (title, formitems, updated, userid) VALUES ("New Form", ?, NOW(), ?)`
+	r, err := db.Exec(q, newFormItemsJSON, userid)
 	if err != nil {
 		return 0, err
 	}
@@ -73,9 +83,9 @@ func (db FormDB) New() (id int, err error) {
 }
 
 // Delete comment
-func (db FormDB) Delete(id int) error {
-	q := `DELETE FROM forms where id=?`
-	_, err := db.Exec(q, id)
+func (db FormDB) Delete(id, userid int) error {
+	q := `DELETE FROM forms WHERE id=? AND userid=?`
+	_, err := db.Exec(q, id, userid)
 	if err != nil {
 		return err
 	}
@@ -83,15 +93,15 @@ func (db FormDB) Delete(id int) error {
 }
 
 // Update comment
-func (db FormDB) Update(id int, title string, formItems []FormItem) error {
+func (db FormDB) Update(id, userid int, title string, formItems []FormItem) error {
 	b, err := json.Marshal(formItems)
 	if err != nil {
 		return err
 	}
 	formItemsJSON := string(b)
 
-	q := `UPDATE forms SET title=?, formitems=?, updated=NOW() where id=?`
-	_, err = db.Exec(q, title, formItemsJSON, id)
+	q := `UPDATE forms SET title=?, formitems=?, updated=NOW() WHERE id=? AND userid=?`
+	_, err = db.Exec(q, title, formItemsJSON, id, userid)
 	if err != nil {
 		return err
 	}

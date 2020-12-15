@@ -11,18 +11,21 @@ func (app *application) routes() http.Handler {
 	router := httprouter.New()
 	router.PanicHandler = app.panic
 
-	router.HandlerFunc("GET", "/", app.home)
+	router.HandlerFunc("GET", "/", app.auth(app.home))
 
-	router.HandlerFunc("GET", "/edit", app.chooseForm)
-	router.HandlerFunc("POST", "/edit", app.addRemForm)
-	router.HandlerFunc("GET", "/edit/:id", app.viewForm)
-	router.HandlerFunc("POST", "/edit/:id", app.editForm)
+	router.HandlerFunc("GET", "/edit", app.auth(app.chooseForm))
+	router.HandlerFunc("POST", "/edit", app.auth(app.addRemForm))
+	router.HandlerFunc("GET", "/edit/:id", app.auth(app.viewForm))
+	router.HandlerFunc("POST", "/edit/:id", app.auth(app.editForm))
 
 	router.HandlerFunc("GET", "/use/:id", app.useForm)
 	// router.HandlerFunc("POST", "/use/:id", app.useForm)
 
-	// router.HandlerFunc("GET", "/login", app.login)
-	// router.HandlerFunc("POST", "/login", app.login)
+	router.HandlerFunc("GET", "/login", app.login)
+	router.HandlerFunc("POST", "/login", app.login)
+	router.HandlerFunc("GET", "/signup", app.signup)
+	router.HandlerFunc("POST", "/signup", app.signup)
+	router.HandlerFunc("GET", "/logout", app.logout)
 
 	router.HandlerFunc("GET", "/favicon.ico", app.favicon)
 	router.HandlerFunc("GET", "/style.css", app.style)

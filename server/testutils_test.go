@@ -43,7 +43,7 @@ func getAttr(t html.Token, key string) string {
 }
 
 // checkEditMode returns the editMode based on state of Edit/Preview buttons
-func checkEditMode(t html.Token, editMode bool) bool {
+func checkEditMode(t html.Token, pageMode int) int {
 	m := map[string]string{}
 	for _, attr := range t.Attr {
 		m[attr.Key] = attr.Val
@@ -51,20 +51,20 @@ func checkEditMode(t html.Token, editMode bool) bool {
 	_, disabled := m["disabled"]
 	if m["name"] == "action" && m["value"] == "view" {
 		if !disabled {
-			editMode = true
+			pageMode = editMode
 		}
 	}
 	if m["name"] == "action" && m["value"] == "edit" {
 		if disabled {
-			editMode = true
+			pageMode = editMode
 		}
 	}
-	return editMode
+	return pageMode
 }
 
 // scrapeViewForm screen scrapes the response Body and returns a form struct for test comparison
 func scrapeViewForm(body io.Reader) formPage {
-	scraped := formPage{}
+	scraped := formPage{PageMode: viewMode}
 	processedOptions := false
 	t := html.Token{}
 	z := html.NewTokenizer(body)
@@ -76,7 +76,7 @@ func scrapeViewForm(body io.Reader) formPage {
 			break
 		}
 		if t.Type == html.StartTagToken && t.Data == "button" {
-			scraped.EditMode = checkEditMode(t, scraped.EditMode)
+			scraped.PageMode = checkEditMode(t, scraped.PageMode)
 			continue
 		}
 		if t.Type == html.StartTagToken && t.Data == "h1" {
@@ -188,7 +188,7 @@ func scrapeViewForm(body io.Reader) formPage {
 }
 
 func scrapeEditForm(body io.Reader) formPage {
-	scraped := formPage{}
+	scraped := formPage{PageMode: viewMode}
 	processedOptions := false
 	t := html.Token{}
 	z := html.NewTokenizer(body)
@@ -200,7 +200,7 @@ func scrapeEditForm(body io.Reader) formPage {
 			break
 		}
 		if t.Type == html.StartTagToken && t.Data == "button" {
-			scraped.EditMode = checkEditMode(t, scraped.EditMode)
+			scraped.PageMode = checkEditMode(t, scraped.PageMode)
 			continue
 		}
 		if t.Type == html.StartTagToken && t.Data == "h1" {
@@ -280,22 +280,21 @@ func scrapeEditForm(body io.Reader) formPage {
 
 type mock struct{}
 
-func (m mock) Get(id int) (title string, formItems []models.FormItem, found bool, err error) {
+func (m mock) GetAll(userid int) (forms []models.Form, err error) {
 	return
 }
-
-func (m mock) Update(id int, title string, formItems []models.FormItem) error {
+func (m mock) New(userid int) (id int, err error) {
+	return
+}
+func (m mock) Delete(id, userid int) error {
 	return nil
 }
-
-func (m mock) GetAll() (forms []models.Form, err error) {
+func (m mock) Get(id, userid int) (title string, formItems []models.FormItem, found bool, err error) {
 	return
 }
-
-func (m mock) New() (id int, err error) {
-	return
-}
-
-func (m mock) Delete(id int) error {
+func (m mock) Update(id, userid int, title string, formItems []models.FormItem) error {
 	return nil
+}
+func (m mock) Use(id int) (title string, formItems []models.FormItem, found bool, err error) {
+	return
 }

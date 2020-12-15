@@ -1,0 +1,19 @@
+{{define "logon"}}
+    {{template "html.start" .}}
+    <h1>{{.Title}}</h1>
+    {{with .Err }}<em class="error">{{.}}</em>{{end}}
+    <form method="post">
+        <label>Username:</label><br>
+        <input type="text" name="username" value={{.Username}}><br>
+        <label>Password:</label><br>
+        <input type="password" name="password"><br>
+        <input type="submit"><br>
+    </form>
+    {{if .Title | eq "Sign up"}}
+        <h3><a href="/login">Back to Login</a></h3>
+    {{end}}
+    {{if .Title | eq "Login"}}
+        <h3><a href="/signup">Sign up as new user</a></h3>
+    {{end}}
+    {{template "html.end" .}}
+{{end}}

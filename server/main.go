@@ -9,23 +9,25 @@ import (
 	"regexp"
 
 	"forms/models"
-
-	_ "github.com/go-sql-driver/mysql"
+	//_ "github.com/go-sql-driver/mysql"
 )
 
 type form interface {
-	GetAll() (forms []models.Form, err error)
-	New() (id int, err error)
-	Delete(id int) error
-	Get(id int) (title string, formItems []models.FormItem, found bool, err error)
-	Update(id int, title string, formItems []models.FormItem) error
+	GetAll(userid int) (forms []models.Form, err error)
+	New(userid int) (id int, err error)
+	Delete(id, userid int) error
+	Get(id, userid int) (title string, formItems []models.FormItem, found bool, err error)
+	Update(id, userid int, title string, formItems []models.FormItem) error
+	Use(id int) (title string, formItems []models.FormItem, found bool, err error)
 }
 
 type application struct {
 	errorLog *log.Logger
 	infoLog  *log.Logger
+	user     models.UserDB
 	form
 	tmpl *template.Template
+	session
 }
 
 // look into unglobalizing this
@@ -59,8 +61,10 @@ func main() {
 	app := &application{
 		errorLog: errorLog,
 		infoLog:  infoLog,
+		user:     models.UserDB{DB: db},
 		form:     models.FormDB{DB: db},
 		tmpl:     tmpl,
+		session:  session{sid: map[string]int{}, uid: map[int]string{}},
 	}
 
 	infoLog.Println("Server starting at port :", port)

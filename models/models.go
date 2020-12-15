@@ -15,3 +15,11 @@ type FormItem struct {
 	Type    string
 	Options []string
 }
+
+// User comment
+type User struct {
+	ID      int
+	Name    string
+	Pwhash  string
+	Created string
+}

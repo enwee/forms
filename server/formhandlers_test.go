@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"html/template"
 	"io"
 	"io/ioutil"
@@ -47,7 +48,7 @@ var baseWithEmptyLabel = []models.FormItem{
 type test struct {
 	name, action, title string
 	formItems, expected []models.FormItem
-	editMode            bool
+	pageMode            int
 	scrape              func(io.Reader) formPage
 }
 
@@ -78,7 +79,7 @@ func TestViewFormLayout(t *testing.T) {
 
 	for _, test := range tests {
 		test.action = "view"
-		test.editMode = false
+		test.pageMode = viewMode
 		test.scrape = scrapeViewForm
 		runTest(test, t)
 	}
@@ -116,7 +117,7 @@ func TestEditFormLayout(t *testing.T) {
 
 	for _, test := range tests {
 		test.action = "edit"
-		test.editMode = true
+		test.pageMode = editMode
 		test.scrape = scrapeEditForm
 		runTest(test, t)
 	}
@@ -240,7 +241,7 @@ func TestEditFormActions(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		test.editMode = true
+		test.pageMode = editMode
 		test.scrape = scrapeEditForm
 		runTest(test, t)
 	}
@@ -248,8 +249,8 @@ func TestEditFormActions(t *testing.T) {
 
 func runTest(test test, t *testing.T) {
 	t.Run(test.name, func(t *testing.T) {
-		data := formPage{test.title, "", test.formItems, test.editMode}
-		expected := formPage{test.title, "", test.expected, test.editMode}
+		data := formPage{Title: test.title, FormItems: test.formItems, PageMode: test.pageMode}
+		expected := formPage{Title: test.title, FormItems: test.expected, PageMode: test.pageMode}
 		if test.action == "view" || test.action == "edit" {
 			expected = data
 		}
@@ -259,6 +260,8 @@ func runTest(test test, t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
+		ctx := context.WithValue(r.Context(), userID("userid"), 0)
+		r = r.WithContext(ctx)
 		r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 		router := httprouter.New()

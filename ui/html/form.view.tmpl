@@ -17,4 +17,8 @@
         <br>
         <button type="button" disabled>Send</button>
     </div>
+    {{if ne .Userid 0}}
+        <em><br>Your users can submit this form at<br></em>
+        <a href="/use/{{.Formid}}">ewforms.herokuapp.com/use/{{.Formid}}</a>
+    {{end}}
 {{end}}

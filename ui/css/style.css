@@ -3,9 +3,9 @@ body {
 }
 
 .form{
-    padding: 0rem 1rem 1rem 1rem;
+    margin: 1rem 0rem 0rem 0rem;
     border: 1px solid black;
-    margin: 0.25rem;
+    padding: 0rem 1rem 1rem 1rem;
 }
 
 .error {
