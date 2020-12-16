@@ -260,7 +260,7 @@ func runTest(test test, t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		ctx := context.WithValue(r.Context(), userID("userid"), 0)
+		ctx := context.WithValue(r.Context(), contextKey("user"), user{0, ""})
 		r = r.WithContext(ctx)
 		r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 

@@ -4,11 +4,9 @@ import (
 	"net/http"
 )
 
-type userID string
-
 func (app *application) home(w http.ResponseWriter, r *http.Request) {
-	userid := r.Context().Value(userID("userid")).(int)
-	if userid == 0 {
+	user := r.Context().Value(contextKey("user")).(user)
+	if user.ID == 0 {
 		http.Redirect(w, r, "/edit/1", 303)
 		return
 	}

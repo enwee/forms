@@ -64,7 +64,7 @@ func main() {
 		user:     models.UserDB{DB: db},
 		form:     models.FormDB{DB: db},
 		tmpl:     tmpl,
-		session:  session{sid: map[string]int{}, uid: map[int]string{}},
+		session:  session{sid: map[string]user{}, uid: map[int]string{}},
 	}
 
 	infoLog.Println("Server starting at port :", port)

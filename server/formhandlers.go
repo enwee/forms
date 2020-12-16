@@ -22,18 +22,18 @@ type formPage struct {
 	TitleErr  string // to change this to Err []string for other Errs can use {{with X}} action
 	FormItems []models.FormItem
 	PageMode  int
-	Userid    int
+	User      user
 	Formid    int
 }
 
 func (app *application) chooseForm(w http.ResponseWriter, r *http.Request) {
-	userid := r.Context().Value(userID("userid")).(int)
-	if userid == 0 {
+	u := r.Context().Value(contextKey("user")).(user)
+	if u.ID == 0 {
 		http.Redirect(w, r, "/", 303)
 		return
 	}
 
-	forms, err := app.form.GetAll(userid)
+	forms, err := app.form.GetAll(u.ID)
 	if err != nil {
 		app.errorLog.Print(err)
 		http.Error(w, "500 Internal Server Error", 500)
@@ -42,8 +42,8 @@ func (app *application) chooseForm(w http.ResponseWriter, r *http.Request) {
 	pageData := struct {
 		Forms    []models.Form
 		PageMode int
-		Userid   int
-	}{forms, chooseMode, userid}
+		User     user
+	}{forms, chooseMode, u}
 	err = app.tmpl.ExecuteTemplate(w, "form", pageData)
 	if err != nil {
 		app.errorLog.Print(err)
@@ -53,8 +53,8 @@ func (app *application) chooseForm(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *application) addRemForm(w http.ResponseWriter, r *http.Request) {
-	userid := r.Context().Value(userID("userid")).(int)
-	if userid == 0 {
+	u := r.Context().Value(contextKey("user")).(user)
+	if u.ID == 0 {
 		http.Redirect(w, r, "/", 303)
 		return
 	}
@@ -74,21 +74,21 @@ func (app *application) addRemForm(w http.ResponseWriter, r *http.Request) {
 
 	switch action {
 	case "add":
-		_, err := app.form.New(userid)
+		_, err := app.form.New(u.ID)
 		if err != nil {
 			app.errorLog.Print(err)
 			http.Error(w, "500 Internal Server Error", 500)
 			return
 		}
 	case "del":
-		err = app.form.Delete(id, userid)
+		err = app.form.Delete(id, u.ID)
 		if err != nil {
 			app.errorLog.Print(err)
 			http.Error(w, "500 Internal Server Error", 500)
 			return
 		}
 	case "auth":
-		if userid == 0 {
+		if u.ID == 0 {
 			http.Redirect(w, r, "/", 303)
 			return
 		}
@@ -102,8 +102,8 @@ func (app *application) addRemForm(w http.ResponseWriter, r *http.Request) {
 func (app *application) viewForm(w http.ResponseWriter, r *http.Request) {
 	var id int
 	var err error
-	userid := r.Context().Value(userID("userid")).(int)
-	if userid == 0 {
+	u := r.Context().Value(contextKey("user")).(user)
+	if u.ID == 0 {
 		id = 1 // demo form id
 	} else {
 		id, err = strconv.Atoi(httprouter.ParamsFromContext(r.Context()).ByName("id"))
@@ -113,7 +113,7 @@ func (app *application) viewForm(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "400 Invalid data", 400)
 		return
 	}
-	title, formItems, found, err := app.form.Get(id, userid)
+	title, formItems, found, err := app.form.Get(id, u.ID)
 	if err != nil {
 		app.errorLog.Print(err)
 		http.Error(w, "500 Internal Server Error", 500)
@@ -124,7 +124,7 @@ func (app *application) viewForm(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "404 Form not found", 404)
 		return
 	}
-	err = app.tmpl.ExecuteTemplate(w, "form", formPage{title, "", formItems, viewMode, userid, id})
+	err = app.tmpl.ExecuteTemplate(w, "form", formPage{title, "", formItems, viewMode, u, id})
 	if err != nil {
 		app.errorLog.Print(err)
 		http.Error(w, "500 Internal Server Error", 500)
@@ -133,7 +133,7 @@ func (app *application) viewForm(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *application) editForm(w http.ResponseWriter, r *http.Request) {
-	userid := r.Context().Value(userID("userid")).(int)
+	u := r.Context().Value(contextKey("user")).(user)
 	id, err := strconv.Atoi(httprouter.ParamsFromContext(r.Context()).ByName("id"))
 	if err != nil {
 		app.errorLog.Print(err)
@@ -205,10 +205,10 @@ func (app *application) editForm(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 		pageMode = viewMode
-		if userid == 0 {
+		if u.ID == 0 {
 			break
 		}
-		err = app.form.Update(id, userid, title, formItems)
+		err = app.form.Update(id, u.ID, title, formItems)
 		if err != nil {
 			app.errorLog.Print(err)
 			http.Error(w, "500 Internal Server Error", 500)
@@ -218,7 +218,7 @@ func (app *application) editForm(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/edit", http.StatusSeeOther)
 		return
 	case "auth":
-		if userid == 0 {
+		if u.ID == 0 {
 			http.Redirect(w, r, "/login", 303)
 			return
 		}
@@ -226,7 +226,7 @@ func (app *application) editForm(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = app.tmpl.ExecuteTemplate(w, "form", formPage{title, titleErr, formItems, pageMode, userid, id})
+	err = app.tmpl.ExecuteTemplate(w, "form", formPage{title, titleErr, formItems, pageMode, u, id})
 	if err != nil {
 		app.errorLog.Print(err)
 		http.Error(w, "500 Internal Server Error", 500)

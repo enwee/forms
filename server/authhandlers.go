@@ -9,8 +9,15 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+type contextKey string
+
+type user struct {
+	ID   int
+	Name string
+}
+
 type session struct {
-	sid map[string]int
+	sid map[string]user
 	uid map[int]string
 }
 
@@ -42,7 +49,7 @@ func (app *application) signup(w http.ResponseWriter, r *http.Request) {
 			if duplicate {
 				userError = "that user name is not available"
 			} else {
-				app.newSession(w, userid)
+				app.newSession(w, userid, username)
 				http.Redirect(w, r, "/edit", http.StatusSeeOther)
 				return
 			}
@@ -73,7 +80,7 @@ func (app *application) login(w http.ResponseWriter, r *http.Request) {
 			} else {
 				pw := r.FormValue("password")
 				if bcrypt.CompareHashAndPassword([]byte(pwhash), []byte(pw)) == nil {
-					app.newSession(w, userid)
+					app.newSession(w, userid, username)
 					http.Redirect(w, r, "/edit", http.StatusSeeOther)
 					return
 				}
@@ -96,33 +103,33 @@ func (app *application) logout(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return
 	}
-	userid := app.session.sid[cookie.Value]
+	user := app.session.sid[cookie.Value]
 	delete(app.session.sid, cookie.Value)
-	delete(app.session.uid, userid)
+	delete(app.session.uid, user.ID)
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 	return
 }
 
-func (app *application) newSession(w http.ResponseWriter, userid int) {
+func (app *application) newSession(w http.ResponseWriter, userid int, username string) {
 	u := uuid.New().String()
 	c := http.Cookie{Name: "sid", Value: u, HttpOnly: true}
 	http.SetCookie(w, &c)
 
-	app.session.sid[u] = userid
+	app.session.sid[u] = user{userid, username}
 	delete(app.session.sid, app.session.uid[userid]) //remove prev session if any
 	app.session.uid[userid] = u
 }
 
 func (app *application) auth(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var userid int
+		var u user
 		c, err := r.Cookie("sid")
 		if err == http.ErrNoCookie {
-			userid = 0
+			u = user{0, ""}
 		} else {
-			userid = app.session.sid[c.Value] //userid is 0 if invalid
+			u = app.session.sid[c.Value] //userid is 0 if invalid
 		}
-		ctx := context.WithValue(r.Context(), userID("userid"), userid)
+		ctx := context.WithValue(r.Context(), contextKey("user"), u)
 		r = r.WithContext(ctx)
 		next(w, r)
 	}
