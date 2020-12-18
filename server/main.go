@@ -9,7 +9,8 @@ import (
 	"regexp"
 
 	"forms/models"
-	//_ "github.com/go-sql-driver/mysql"
+	// already imported in models/userDB.go to use mysql.MySQLError types
+	// _ "github.com/go-sql-driver/mysql" // so no need to _ import just for the driver
 )
 
 type form interface {
@@ -27,11 +28,9 @@ type application struct {
 	user     models.UserDB
 	form
 	tmpl *template.Template
+	re   *regexp.Regexp
 	session
 }
-
-// look into unglobalizing this
-var re = regexp.MustCompile(`(^(add|del|upp|dwn|txt|cxb|sel)\d+$|^opt\d+ (add|del|upp|dwn)\d+$)`)
 
 func main() {
 	errorLog := log.New(os.Stderr, "error:\t", log.LstdFlags|log.Lshortfile)
@@ -58,14 +57,31 @@ func main() {
 		errorLog.Fatal(err)
 	}
 
+	re := regexp.MustCompile(`(^(add|del|upp|dwn|txt|cxb|sel)\d+$|^opt\d+ (add|del|upp|dwn)\d+$)`)
+
+	s := session{sid: map[string]models.User{}, uid: map[int]string{}}
+
 	app := &application{
 		errorLog: errorLog,
 		infoLog:  infoLog,
 		user:     models.UserDB{DB: db},
 		form:     models.FormDB{DB: db},
 		tmpl:     tmpl,
-		session:  session{sid: map[string]user{}, uid: map[int]string{}},
+		re:       re,
+		session:  s,
 	}
+
+	// Doing TLS server here is ok but using a self signed cert is
+	// not an acceptable experience when hosted for public access,
+	// site will be marked unsafe - cannot verify Root CA (self signed cert).
+	//
+	// herokuapp.com domain already provides TLS if server is http(non TLS)
+	// and that is what i am going to use because the free tier i am using
+	// there is no shell access to install certbot for verification required
+	// to obtain a free let's encrypt cert which can be verified.
+	//
+	// TLS is necessary because otherwise signup/login page request body sends
+	// password in plaintext. TLS will encrypt this transmission.
 
 	infoLog.Println("Server starting at port :", port)
 	err = http.ListenAndServe(":"+port, app.routes())

@@ -278,23 +278,23 @@ func scrapeEditForm(body io.Reader) formPage {
 	return scraped
 }
 
-type mock struct{}
+type mockDB struct{}
 
-func (m mock) GetAll(userid int) (forms []models.Form, err error) {
+func (m mockDB) GetAll(userid int) (forms []models.Form, err error) {
 	return
 }
-func (m mock) New(userid int) (id int, err error) {
+func (m mockDB) New(userid int) (id int, err error) {
 	return
 }
-func (m mock) Delete(id, userid int) error {
+func (m mockDB) Delete(id, userid int) error {
 	return nil
 }
-func (m mock) Get(id, userid int) (title string, formItems []models.FormItem, found bool, err error) {
+func (m mockDB) Get(id, userid int) (title string, formItems []models.FormItem, found bool, err error) {
 	return
 }
-func (m mock) Update(id, userid int, title string, formItems []models.FormItem) error {
+func (m mockDB) Update(id, userid int, title string, formItems []models.FormItem) error {
 	return nil
 }
-func (m mock) Use(id int) (title string, formItems []models.FormItem, found bool, err error) {
+func (m mockDB) Use(id int) (title string, formItems []models.FormItem, found bool, err error) {
 	return
 }

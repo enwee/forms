@@ -6,12 +6,22 @@ import (
 	"errors"
 )
 
-// FormDB comment
+// mysql statement to create the table:
+//
+// CREATE TABLE `forms` (
+// 	`id` int NOT NULL PRIMARY KEY AUTO_INCREMENT,
+// 	`title` char(50) NOT NULL,
+// 	`formitems` text NOT NULL,
+// 	`updated` datetime NOT NULL,
+// 	`userid` int NOT NULL
+// );
+
+// FormDB is the database handle with functions to access forms table
 type FormDB struct {
 	*sql.DB
 }
 
-// GetAll comment
+// GetAll forms belonging to the user
 func (db FormDB) GetAll(userid int) (forms []Form, err error) {
 	q := `SELECT id, title, updated FROM forms WHERE userid=?`
 	rows, err := db.Query(q, userid)
@@ -34,13 +44,13 @@ func (db FormDB) GetAll(userid int) (forms []Form, err error) {
 	return forms, nil
 }
 
-// Get comment
+// Get a form belonging to the user
 func (db FormDB) Get(id, userid int) (title string, formItems []FormItem, found bool, err error) {
 	q := `SELECT title, formitems FROM forms WHERE id=? AND userid=?`
 	return db.get(q, id, userid)
 }
 
-// Use comment
+// Use gets any form in the table
 func (db FormDB) Use(id int) (title string, formItems []FormItem, found bool, err error) {
 	q := `SELECT title, formitems FROM forms WHERE id=?`
 	return db.get(q, id)
@@ -66,7 +76,7 @@ func (db FormDB) get(q string, ids ...interface{}) (title string, formItems []Fo
 	return
 }
 
-// New comment
+// New creates a new form belonging to the user
 func (db FormDB) New(userid int) (id int, err error) {
 	newFormItemsJSON := `[{"Label":"Text box","Type":"text","Options":null},{"Label":"Check box","Type":"checkbox","Options":null},{"Label":"Drop down select","Type":"select","Options":["option1","option2"]}]`
 
@@ -82,7 +92,7 @@ func (db FormDB) New(userid int) (id int, err error) {
 	return int(formID), nil
 }
 
-// Delete comment
+// Delete form belonging to the user
 func (db FormDB) Delete(id, userid int) error {
 	q := `DELETE FROM forms WHERE id=? AND userid=?`
 	_, err := db.Exec(q, id, userid)
@@ -92,7 +102,7 @@ func (db FormDB) Delete(id, userid int) error {
 	return nil
 }
 
-// Update comment
+// Update form belonging to the user
 func (db FormDB) Update(id, userid int, title string, formItems []FormItem) error {
 	b, err := json.Marshal(formItems)
 	if err != nil {

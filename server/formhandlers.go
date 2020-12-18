@@ -10,24 +10,22 @@ import (
 )
 
 const (
-	unimplementedMode = iota
-	chooseMode
+	chooseMode = iota + 1
 	editMode
 	viewMode
-	demoMode
 )
 
 type formPage struct {
 	Title     string
-	TitleErr  string // to change this to Err []string for other Errs can use {{with X}} action
+	TitleErr  string // change to Errs []string to use multi errs
 	FormItems []models.FormItem
 	PageMode  int
-	User      user
+	User      models.User
 	Formid    int
 }
 
 func (app *application) chooseForm(w http.ResponseWriter, r *http.Request) {
-	u := r.Context().Value(contextKey("user")).(user)
+	u := r.Context().Value(contextKey("user")).(models.User)
 	if u.ID == 0 {
 		http.Redirect(w, r, "/", 303)
 		return
@@ -42,7 +40,7 @@ func (app *application) chooseForm(w http.ResponseWriter, r *http.Request) {
 	pageData := struct {
 		Forms    []models.Form
 		PageMode int
-		User     user
+		User     models.User
 	}{forms, chooseMode, u}
 	err = app.tmpl.ExecuteTemplate(w, "form", pageData)
 	if err != nil {
@@ -53,7 +51,7 @@ func (app *application) chooseForm(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *application) addRemForm(w http.ResponseWriter, r *http.Request) {
-	u := r.Context().Value(contextKey("user")).(user)
+	u := r.Context().Value(contextKey("user")).(models.User)
 	if u.ID == 0 {
 		http.Redirect(w, r, "/", 303)
 		return
@@ -102,9 +100,9 @@ func (app *application) addRemForm(w http.ResponseWriter, r *http.Request) {
 func (app *application) viewForm(w http.ResponseWriter, r *http.Request) {
 	var id int
 	var err error
-	u := r.Context().Value(contextKey("user")).(user)
+	u := r.Context().Value(contextKey("user")).(models.User)
 	if u.ID == 0 {
-		id = 1 // demo form id
+		id = 1 // id of form used for demo
 	} else {
 		id, err = strconv.Atoi(httprouter.ParamsFromContext(r.Context()).ByName("id"))
 	}
@@ -133,7 +131,7 @@ func (app *application) viewForm(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *application) editForm(w http.ResponseWriter, r *http.Request) {
-	u := r.Context().Value(contextKey("user")).(user)
+	u := r.Context().Value(contextKey("user")).(models.User)
 	id, err := strconv.Atoi(httprouter.ParamsFromContext(r.Context()).ByName("id"))
 	if err != nil {
 		app.errorLog.Print(err)
@@ -142,7 +140,7 @@ func (app *application) editForm(w http.ResponseWriter, r *http.Request) {
 	}
 	pageMode := editMode
 	title, titleErr := validateTitle(r)
-	formItems, action, opt, index, idx, err := validateForm(r)
+	formItems, action, opt, index, idx, err := validateForm(r, app.re)
 	if err != nil {
 		app.errorLog.Print(err)
 		http.Error(w, "400 Invalid data", 400)
@@ -199,7 +197,7 @@ func (app *application) editForm(w http.ResponseWriter, r *http.Request) {
 		formItems[index].Type = "select"
 		formItems[index].Options = []string{""}
 	case "edit":
-		pageMode = editMode // does nothing, editMode is the default
+		pageMode = editMode // does nothing, editMode is the default, more readable than blank line
 	case "view":
 		if titleErr != "" {
 			break

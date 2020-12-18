@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"reflect"
+	"regexp"
 	"testing"
 
 	"forms/models"
@@ -18,16 +19,20 @@ import (
 
 var app application
 
+// this is the stuff that main.go does before the handler can work
 func init() {
 	tmpl := template.Must(template.New("").
 		Funcs(template.FuncMap{"minus1": minus1}).
 		ParseGlob("../ui/html/*.tmpl"))
 
+	re := regexp.MustCompile(`(^(add|del|upp|dwn|txt|cxb|sel)\d+$|^opt\d+ (add|del|upp|dwn)\d+$)`)
+
 	app = application{
 		errorLog: log.New(ioutil.Discard, "", 0),
 		infoLog:  log.New(ioutil.Discard, "", 0),
-		form:     mock{},
+		form:     mockDB{},
 		tmpl:     tmpl,
+		re:       re,
 	}
 }
 
@@ -260,7 +265,7 @@ func runTest(test test, t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		ctx := context.WithValue(r.Context(), contextKey("user"), user{0, ""})
+		ctx := context.WithValue(r.Context(), contextKey("user"), models.User{ID: 0, Name: ""})
 		r = r.WithContext(ctx)
 		r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 

@@ -3,12 +3,16 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"regexp"
 	"strconv"
 	"strings"
 	"unicode/utf8"
 
 	"forms/models"
 )
+
+const maxUsernameLen = 8
+const maxFormTitleLen = 50
 
 func getAction(action string) (string, int, error) {
 	index, err := strconv.Atoi(action[3:])
@@ -27,7 +31,7 @@ func validateUsername(username string) (err string) {
 	if username == "" {
 		return "user name cannot be blank"
 	}
-	if len(username) > 8 {
+	if len(username) > maxUsernameLen {
 		return "user name too long (max 8 characters)"
 	}
 	return ""
@@ -38,13 +42,13 @@ func validateTitle(r *http.Request) (title, titleErr string) {
 	if title == "" {
 		titleErr = "Title cannot be empty"
 	}
-	if utf8.RuneCount([]byte(title)) > 100 {
+	if utf8.RuneCount([]byte(title)) > maxFormTitleLen {
 		titleErr = "Title is too long"
 	}
 	return
 }
 
-func validateForm(r *http.Request) (formItems []models.FormItem, action, opt string, index, idx int, err error) {
+func validateForm(r *http.Request, re *regexp.Regexp) (formItems []models.FormItem, action, opt string, index, idx int, err error) {
 	labels := r.Form["label"] // will get []string(nil) if doesnt exist
 	inputType := r.Form["type"]
 	if len(labels) != len(inputType) { // len([]string(nil) will be  0)

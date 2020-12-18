@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"forms/models"
 	"net/http"
 	"strings"
 
@@ -11,19 +12,25 @@ import (
 
 type contextKey string
 
-type user struct {
-	ID   int
-	Name string
-}
-
+// Very simple in-memory session store
+// Best to use proper session management package where
+// Session expiry info can be encrypted in client cookie
+// and encrypted cookie validation can be properly handled.
+// writing a proper session mgmt package is out of scope.
+//
+// an unintended consequence of hosting on heroku free tier
+// is the server sleeps after 30mins of inactivity and
+// restarts only upon the next request.
+// This clears the session store and invalidates old cookies
+// so 30min session expiry seems to happen.
 type session struct {
-	sid map[string]user
+	sid map[string]models.User
 	uid map[int]string
 }
 
 type logonPage struct {
-	Title    string
-	Username string
+	Title    string // Signup/Login page uses same template
+	Username string // initial value to show if previous entry is err
 	Err      string
 }
 
@@ -112,20 +119,20 @@ func (app *application) logout(w http.ResponseWriter, r *http.Request) {
 
 func (app *application) newSession(w http.ResponseWriter, userid int, username string) {
 	u := uuid.New().String()
-	c := http.Cookie{Name: "sid", Value: u, HttpOnly: true}
+	c := http.Cookie{Name: "sid", Value: u, HttpOnly: true} //expiry not set cos easy too tamper
 	http.SetCookie(w, &c)
 
-	app.session.sid[u] = user{userid, username}
+	app.session.sid[u] = models.User{ID: userid, Name: username}
 	delete(app.session.sid, app.session.uid[userid]) //remove prev session if any
 	app.session.uid[userid] = u
 }
 
 func (app *application) auth(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var u user
+		var u models.User
 		c, err := r.Cookie("sid")
 		if err == http.ErrNoCookie {
-			u = user{0, ""}
+			u = models.User{ID: 0, Name: ""}
 		} else {
 			u = app.session.sid[c.Value] //userid is 0 if invalid
 		}
