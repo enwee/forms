@@ -132,7 +132,7 @@ func (app *application) auth(next http.HandlerFunc) http.HandlerFunc {
 		var u models.User
 		c, err := r.Cookie("sid")
 		if err == http.ErrNoCookie {
-			u = models.User{ID: 0, Name: ""}
+			u = models.User{ID: 0, Name: "demo"}
 		} else {
 			u = app.session.sid[c.Value] //userid is 0 if invalid
 		}

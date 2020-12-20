@@ -11,7 +11,7 @@ func TestMainServer(t *testing.T) {
 	// heroku clearDB mysql has about 10 max DB connections
 	// test hits max DB connection limit before server limit
 	const url = "http://localhost:5000"
-	const numRequests = 150 // default mysqld max conn limit
+	const numRequests = 149 // i usually have another cli dev connection to DB
 	const runs = 10         // for tests to complete faster, can be 20
 
 	// On my machine usually more than 20+ runs will hit server too many open files error

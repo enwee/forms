@@ -26,11 +26,6 @@ type formPage struct {
 
 func (app *application) chooseForm(w http.ResponseWriter, r *http.Request) {
 	u := r.Context().Value(contextKey("user")).(models.User)
-	if u.ID == 0 {
-		http.Redirect(w, r, "/", 303)
-		return
-	}
-
 	forms, err := app.form.GetAll(u.ID)
 	if err != nil {
 		app.errorLog.Print(err)
@@ -53,7 +48,7 @@ func (app *application) chooseForm(w http.ResponseWriter, r *http.Request) {
 func (app *application) addRemForm(w http.ResponseWriter, r *http.Request) {
 	u := r.Context().Value(contextKey("user")).(models.User)
 	if u.ID == 0 {
-		http.Redirect(w, r, "/", 303)
+		http.Redirect(w, r, "/login", 303)
 		return
 	}
 
@@ -86,10 +81,6 @@ func (app *application) addRemForm(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	case "auth":
-		if u.ID == 0 {
-			http.Redirect(w, r, "/", 303)
-			return
-		}
 		http.Redirect(w, r, "/logout", 303)
 		return
 	}
@@ -98,14 +89,8 @@ func (app *application) addRemForm(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *application) viewForm(w http.ResponseWriter, r *http.Request) {
-	var id int
-	var err error
 	u := r.Context().Value(contextKey("user")).(models.User)
-	if u.ID == 0 {
-		id = 1 // id of form used for demo
-	} else {
-		id, err = strconv.Atoi(httprouter.ParamsFromContext(r.Context()).ByName("id"))
-	}
+	id, err := strconv.Atoi(httprouter.ParamsFromContext(r.Context()).ByName("id"))
 	if err != nil {
 		app.errorLog.Print(err)
 		http.Error(w, "400 Invalid data", 400)
@@ -118,7 +103,7 @@ func (app *application) viewForm(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if !found {
-		app.errorLog.Printf("form id:%v not found", id)
+		app.errorLog.Printf("form id:%v not found for user:%s", id, u.Name)
 		http.Error(w, "404 Form not found", 404)
 		return
 	}

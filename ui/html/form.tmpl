@@ -5,7 +5,7 @@
     {{$viewMode := 3}}
 
     {{$demoON := eq .User.ID $demoMode}}
-    {{$chooseOFF := or (eq .PageMode $chooseMode) $demoON}}
+    {{$chooseOFF := eq .PageMode $chooseMode}}
     {{$editOFF := ne .PageMode $viewMode}}
     {{$viewOFF := ne .PageMode $editMode}}
 

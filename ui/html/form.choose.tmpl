@@ -1,12 +1,19 @@
 {{define "form.choose"}}
-    <h1>Choose a form</h1>
+    {{$demoMode := 0}}
+    {{$demoON := eq .User.ID $demoMode}}
+    <h1>Choose a form {{if $demoON}}(sample){{end}}</h1>
     <form method="POST">
         <dl>
         {{range .Forms}}
             <dt><a href="edit/{{.ID}}">{{.Title}}</a></dt>
-            <dd><em>last updated {{.Updated}}</em> <button name="action" value="del{{.ID}}">❌</button></dd>
+            <dd><em>last updated {{.Updated}}</em>
+            {{if not $demoON}}
+                <button name="action" value="del{{.ID}}">❌</button></dd>
+            {{end}}
         {{end}}
         </dl>
-        <button name="action" value="add">➕ New Form</button>
+        {{if not $demoON}}
+            <button name="action" value="add">➕ New Form</button>
+        {{end}}
     </form>
 {{end}}
