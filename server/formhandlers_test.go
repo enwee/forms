@@ -54,7 +54,7 @@ type test struct {
 	name, action, title string
 	formItems, expected []models.FormItem
 	pageMode            int
-	scrape              func(io.Reader) formPage
+	scrape              func(io.Reader) pageData
 }
 
 func TestViewFormLayout(t *testing.T) {
@@ -254,8 +254,14 @@ func TestEditFormActions(t *testing.T) {
 
 func runTest(test test, t *testing.T) {
 	t.Run(test.name, func(t *testing.T) {
-		data := formPage{Title: test.title, FormItems: test.formItems, PageMode: test.pageMode}
-		expected := formPage{Title: test.title, FormItems: test.expected, PageMode: test.pageMode}
+		data := pageData{
+			Form:     models.Form{Title: test.title, FormItems: test.formItems},
+			PageMode: test.pageMode,
+		}
+		expected := pageData{
+			Form:     models.Form{Title: test.title, FormItems: test.expected},
+			PageMode: test.pageMode,
+		}
 		if test.action == "view" || test.action == "edit" {
 			expected = data
 		}
@@ -265,7 +271,7 @@ func runTest(test test, t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		ctx := context.WithValue(r.Context(), contextKey("user"), models.User{ID: 0, Name: ""})
+		ctx := context.WithValue(r.Context(), contextKey("user"), models.User{ID: 0, Name: "demo"})
 		r = r.WithContext(ctx)
 		r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 

@@ -5,6 +5,9 @@ import (
 	"testing"
 )
 
+// This test is only for local dev enviroment
+// Should not be used with production/test environment
+// Unless url, numRquests(DB max conn), runs are changed appropriately
 func TestMainServer(t *testing.T) {
 	// Makes e.g 150(numRequests) concurrent requests FOR e.g 10(runs) times
 	// default install of mysqld has 151 max DB connections
@@ -12,7 +15,7 @@ func TestMainServer(t *testing.T) {
 	// test hits max DB connection limit before server limit
 	const url = "http://localhost:5000"
 	const numRequests = 149 // i usually have another cli dev connection to DB
-	const runs = 10         // for tests to complete faster, can be 20
+	const runs = 1          // 1 for continuous tests to complete faster, tested 20 also works
 
 	// On my machine usually more than 20+ runs will hit server too many open files error
 	// But the server does not crash, errors are logged and next request works

@@ -1,22 +1,23 @@
-{{define "form.use"}}
+{{define "use"}}
     {{template "html.start" .}}
     <form method="POST">
+        <input type="hidden" name="version" value={{.Updated}}>
         <div class="form">
             <h1>{{.Title}}</h1>
             {{range $index, $_ := .FormItems}}
                 <label>{{.Label}}</label>
                 {{if .Label}}
                     {{if eq .Type "select"}}
-                        <select>{{range .Options}}<option>{{.}}</option>{{end}}</select>
-                    {{else}}<input type={{.Type}}>{{end}}
+                        <select name={{$index}}>{{range .Options}}<option>{{.}}</option>{{end}}</select>
+                    {{else}}<input type={{.Type}} name={{$index}}>{{end}}
                 {{end}}
                 <br>
             {{end}}
             <br>
-            <button type="button">Send</button>
+            <button>Send</button>
         </div>
+        <br>
+        {{with .Feedback}}<em class="error">{{.}}</em>{{end}}
     </form>
-    <br>
-    <em class="error">Form submission WIP, Comming Soon!</em>
     {{template "html.end" .}}
 {{end}}

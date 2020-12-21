@@ -10,7 +10,8 @@ import (
 
 	"forms/models"
 	// already imported in models/userDB.go to use mysql.MySQLError types
-	// _ "github.com/go-sql-driver/mysql" // so no need to _ import just for the driver
+	// so no need to _ import just for the init() driver part
+	// _ "github.com/go-sql-driver/mysql"
 )
 
 type form interface {
@@ -19,7 +20,7 @@ type form interface {
 	Delete(id, userid int) error
 	Get(id, userid int) (title string, formItems []models.FormItem, found bool, err error)
 	Update(id, userid int, title string, formItems []models.FormItem) error
-	Use(id int) (title string, formItems []models.FormItem, found bool, err error)
+	Use(id int) (title, updated string, formItems []models.FormItem, found bool, err error)
 }
 
 type application struct {

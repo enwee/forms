@@ -1,7 +1,7 @@
 {{define "logon"}}
     {{template "html.start" .}}
     <h1>{{.Title}}</h1>
-    {{with .Err }}<em class="error">{{.}}</em>{{end}}
+    {{with .Feedback }}<em class="error">{{.}}</em>{{end}}
     <form method="post">
         <label>Username:</label><br>
         <input type="text" name="username" value={{.Username}}><br>

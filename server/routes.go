@@ -19,7 +19,7 @@ func (app *application) routes() http.Handler {
 	router.HandlerFunc("POST", "/edit/:id", app.auth(app.editForm))
 
 	router.HandlerFunc("GET", "/use/:id", app.useForm)
-	// router.HandlerFunc("POST", "/use/:id", app.useForm) // WIP
+	router.HandlerFunc("POST", "/use/:id", app.useForm)
 
 	router.HandlerFunc("GET", "/login", app.login)
 	router.HandlerFunc("POST", "/login", app.login)

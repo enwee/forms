@@ -3,6 +3,7 @@ package main
 import (
 	"net/http"
 	"strconv"
+	"strings"
 
 	"forms/models"
 
@@ -15,13 +16,11 @@ const (
 	viewMode
 )
 
-type formPage struct {
-	Title     string
-	TitleErr  string // change to Errs []string to use multi errs
-	FormItems []models.FormItem
-	PageMode  int
-	User      models.User
-	Formid    int
+type pageData struct {
+	models.Form
+	models.User
+	Feedback string // change to Errs []string to use multi errs
+	PageMode int
 }
 
 func (app *application) chooseForm(w http.ResponseWriter, r *http.Request) {
@@ -32,11 +31,12 @@ func (app *application) chooseForm(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "500 Internal Server Error", 500)
 		return
 	}
+	//overwrite the declared pageData type cos this uses []Form
 	pageData := struct {
-		Forms    []models.Form
+		Forms []models.Form
+		models.User
 		PageMode int
-		User     models.User
-	}{forms, chooseMode, u}
+	}{forms, u, chooseMode}
 	err = app.tmpl.ExecuteTemplate(w, "form", pageData)
 	if err != nil {
 		app.errorLog.Print(err)
@@ -107,7 +107,12 @@ func (app *application) viewForm(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "404 Form not found", 404)
 		return
 	}
-	err = app.tmpl.ExecuteTemplate(w, "form", formPage{title, "", formItems, viewMode, u, id})
+
+	pageData := pageData{
+		Form: models.Form{ID: id, Title: title, FormItems: formItems},
+		User: u, Feedback: "", PageMode: viewMode,
+	}
+	err = app.tmpl.ExecuteTemplate(w, "form", pageData)
 	if err != nil {
 		app.errorLog.Print(err)
 		http.Error(w, "500 Internal Server Error", 500)
@@ -124,7 +129,7 @@ func (app *application) editForm(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	pageMode := editMode
-	title, titleErr := validateTitle(r)
+	title, feedback := validateTitle(r)
 	formItems, action, opt, index, idx, err := validateForm(r, app.re)
 	if err != nil {
 		app.errorLog.Print(err)
@@ -184,7 +189,7 @@ func (app *application) editForm(w http.ResponseWriter, r *http.Request) {
 	case "edit":
 		pageMode = editMode // does nothing, editMode is the default, more readable than blank line
 	case "view":
-		if titleErr != "" {
+		if feedback != "" {
 			break
 		}
 		pageMode = viewMode
@@ -209,7 +214,11 @@ func (app *application) editForm(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = app.tmpl.ExecuteTemplate(w, "form", formPage{title, titleErr, formItems, pageMode, u, id})
+	pageData := pageData{
+		Form: models.Form{ID: id, Title: title, FormItems: formItems},
+		User: u, Feedback: feedback, PageMode: pageMode,
+	}
+	err = app.tmpl.ExecuteTemplate(w, "form", pageData)
 	if err != nil {
 		app.errorLog.Print(err)
 		http.Error(w, "500 Internal Server Error", 500)
@@ -224,7 +233,17 @@ func (app *application) useForm(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "400 Invalid data", 400)
 		return
 	}
-	title, formItems, found, err := app.form.Use(id)
+	if r.Method == http.MethodGet {
+		// Prevent demo forms from being used, currently id 1/2/3
+		// Think of a better way
+		// Switch this off to enter demo data
+		if id == 1 || id == 2 || id == 3 {
+			http.Error(w, "404 Form not found", 404)
+			return
+		}
+	}
+
+	title, updated, formItems, found, err := app.form.Use(id)
 	if err != nil {
 		app.errorLog.Print(err)
 		http.Error(w, "500 Internal Server Error", 500)
@@ -235,7 +254,36 @@ func (app *application) useForm(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "404 Form not found", 404)
 		return
 	}
-	err = app.tmpl.ExecuteTemplate(w, "form.use", formPage{Title: title, FormItems: formItems})
+
+	feedback := ""
+	if r.Method == http.MethodPost {
+		version := r.FormValue("version")
+		if version != updated {
+			http.Error(w, "400 Invalid Data or Form has changed", 400)
+			return
+		}
+		keys, values := []string{}, []string{}
+		for index, formItem := range formItems {
+			if formItem.Label == "" {
+				continue
+			}
+			keys = append(keys, formItem.Label)
+			value := strings.TrimSpace(r.FormValue(strconv.Itoa(index)))
+			values = append(values, value)
+		}
+
+		format := "id:%v\nupdated:%v\ntitle:%v\nkeys:%#v\nvalues:%#v\n"
+		app.infoLog.Printf(format, id, updated, title, keys, values)
+		feedback = "Response Sent"
+		// without this refresh reposts form but with it loses feedback
+		http.Redirect(w, r, "/use/"+strconv.Itoa(id), 303) //loses feedback
+	}
+
+	pageData := pageData{
+		Form:     models.Form{ID: id, Title: title, FormItems: formItems, Updated: updated},
+		Feedback: feedback,
+	}
+	err = app.tmpl.ExecuteTemplate(w, "use", pageData)
 	if err != nil {
 		app.errorLog.Print(err)
 		http.Error(w, "500 Internal Server Error", 500)

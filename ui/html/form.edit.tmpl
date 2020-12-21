@@ -1,5 +1,5 @@
 {{define "form.edit"}}
-{{with .TitleErr}}<br><em class="error">{{.}}</em>{{end}}
+{{with .Feedback}}<br><em class="error">{{.}}</em>{{end}}
     <h1>Form Title <input type="text" name="title" value={{.Title}}></h1>
     {{$lastIndex := len .FormItems | minus1}}
     {{range $index, $_ := .FormItems}}

@@ -37,13 +37,13 @@ func validateUsername(username string) (err string) {
 	return ""
 }
 
-func validateTitle(r *http.Request) (title, titleErr string) {
+func validateTitle(r *http.Request) (title, feedback string) {
 	title = strings.TrimSpace(r.FormValue("title"))
 	if title == "" {
-		titleErr = "Title cannot be empty"
+		feedback = "Title cannot be empty"
 	}
 	if utf8.RuneCount([]byte(title)) > maxFormTitleLen {
-		titleErr = "Title is too long"
+		feedback = "Title is too long"
 	}
 	return
 }
@@ -65,9 +65,10 @@ func validateForm(r *http.Request, re *regexp.Regexp) (formItems []models.FormIt
 		if inputType[i] == "select" {
 			opts := r.Form["options"+strconv.Itoa(i)]
 			for _, option := range opts {
-				options = append(options, option)
+				options = append(options, strings.TrimSpace(option))
 			}
 		}
+		label = strings.TrimSpace(label)
 		formItems = append(formItems, models.FormItem{Label: label, Type: inputType[i], Options: options})
 	}
 

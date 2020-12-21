@@ -19,6 +19,6 @@
     </div>
     {{if ne .User.ID 0}}
         <em><br>Your users can submit this form at<br></em>
-        <a href="/use/{{.Formid}}">ewforms.herokuapp.com/use/{{.Formid}}</a>
+        <a href="/use/{{.Form.ID}}">ewforms.herokuapp.com/use/{{.Form.ID}}</a>
     {{end}}
 {{end}}

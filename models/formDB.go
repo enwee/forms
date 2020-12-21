@@ -46,20 +46,21 @@ func (db FormDB) GetAll(userid int) (forms []Form, err error) {
 
 // Get a form belonging to the user
 func (db FormDB) Get(id, userid int) (title string, formItems []FormItem, found bool, err error) {
-	q := `SELECT title, formitems FROM forms WHERE id=? AND userid=?`
-	return db.get(q, id, userid)
+	q := `SELECT title, formitems, updated FROM forms WHERE id=? AND userid=?`
+	title, _, formItems, found, err = db.get(q, id, userid)
+	return
 }
 
 // Use gets any form in the table
-func (db FormDB) Use(id int) (title string, formItems []FormItem, found bool, err error) {
-	q := `SELECT title, formitems FROM forms WHERE id=?`
+func (db FormDB) Use(id int) (title, updated string, formItems []FormItem, found bool, err error) {
+	q := `SELECT title, formitems, updated FROM forms WHERE id=?`
 	return db.get(q, id)
 }
 
-func (db FormDB) get(q string, ids ...interface{}) (title string, formItems []FormItem, found bool, err error) {
+func (db FormDB) get(q string, ids ...interface{}) (title, updated string, formItems []FormItem, found bool, err error) {
 	formItemsJSON := ""
 	row := db.QueryRow(q, ids...)
-	err = row.Scan(&title, &formItemsJSON)
+	err = row.Scan(&title, &formItemsJSON, &updated)
 	if err != nil {
 		if !errors.Is(err, sql.ErrNoRows) {
 			return

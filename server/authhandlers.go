@@ -12,7 +12,7 @@ import (
 
 type contextKey string
 
-// Very simple in-memory session store
+// Very simple in-memory session store used here.
 // Best to use proper session management package where
 // Session expiry info can be encrypted in client cookie
 // and encrypted cookie validation can be properly handled.
@@ -22,7 +22,7 @@ type contextKey string
 // is the server sleeps after 30mins of inactivity and
 // restarts only upon the next request.
 // This clears the session store and invalidates old cookies
-// so 30min session expiry seems to happen.
+// so its as if 30min session expiry seems to happen.
 type session struct {
 	sid map[string]models.User
 	uid map[int]string
@@ -31,7 +31,7 @@ type session struct {
 type logonPage struct {
 	Title    string // Signup/Login page uses same template
 	Username string // initial value to show if previous entry is err
-	Err      string
+	Feedback string
 }
 
 func (app *application) signup(w http.ResponseWriter, r *http.Request) {

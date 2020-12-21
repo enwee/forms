@@ -10,7 +10,7 @@ import (
 )
 
 // makePostBody strings together a form request body e.g key=value&key=value&....
-func makePostBody(data formPage, action string) io.Reader {
+func makePostBody(data pageData, action string) io.Reader {
 	body := "action=" + action + "&title=" + data.Title
 	for index, formItem := range data.FormItems {
 		body = body + "&label=" + formItem.Label
@@ -63,8 +63,8 @@ func checkEditMode(t html.Token, pageMode int) int {
 }
 
 // scrapeViewForm screen scrapes the response Body and returns a form struct for test comparison
-func scrapeViewForm(body io.Reader) formPage {
-	scraped := formPage{PageMode: viewMode}
+func scrapeViewForm(body io.Reader) pageData {
+	scraped := pageData{PageMode: viewMode}
 	processedOptions := false
 	t := html.Token{}
 	z := html.NewTokenizer(body)
@@ -187,8 +187,8 @@ func scrapeViewForm(body io.Reader) formPage {
 	return scraped
 }
 
-func scrapeEditForm(body io.Reader) formPage {
-	scraped := formPage{PageMode: viewMode}
+func scrapeEditForm(body io.Reader) pageData {
+	scraped := pageData{PageMode: viewMode}
 	processedOptions := false
 	t := html.Token{}
 	z := html.NewTokenizer(body)
@@ -295,6 +295,6 @@ func (m mockDB) Get(id, userid int) (title string, formItems []models.FormItem, 
 func (m mockDB) Update(id, userid int, title string, formItems []models.FormItem) error {
 	return nil
 }
-func (m mockDB) Use(id int) (title string, formItems []models.FormItem, found bool, err error) {
+func (m mockDB) Use(id int) (title, updated string, formItems []models.FormItem, found bool, err error) {
 	return
 }
