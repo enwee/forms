@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/base64"
 	"fmt"
 	"net/http"
 	"regexp"
@@ -102,4 +103,21 @@ func stringIs(input string, ss ...string) bool {
 		}
 	}
 	return false
+}
+
+func setFeedback(w http.ResponseWriter, msg string) {
+	encoded := base64.StdEncoding.EncodeToString([]byte(msg))
+	c := http.Cookie{Name: "fb", Value: encoded, HttpOnly: true}
+	http.SetCookie(w, &c)
+}
+
+func getFeedback(w http.ResponseWriter, r *http.Request) string {
+	c, err := r.Cookie("fb")
+	if err == http.ErrNoCookie {
+		return ""
+	}
+	b, _ := base64.StdEncoding.DecodeString(c.Value)
+	c = &http.Cookie{Name: "fb", MaxAge: -1}
+	http.SetCookie(w, c)
+	return string(b)
 }

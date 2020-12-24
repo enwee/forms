@@ -13,11 +13,13 @@ func (app *application) routes() http.Handler {
 
 	router.HandlerFunc("GET", "/", app.auth(app.home))
 
+	// has POST/REDIRECT/GET
 	router.HandlerFunc("GET", "/edit", app.auth(app.chooseForm))
 	router.HandlerFunc("POST", "/edit", app.auth(app.addRemForm))
+	// does not use POST/REDIRECT/GET
 	router.HandlerFunc("GET", "/edit/:id", app.auth(app.viewForm))
 	router.HandlerFunc("POST", "/edit/:id", app.auth(app.editForm))
-
+	// done POST/REDIRECT/GET and flash msg
 	router.HandlerFunc("GET", "/use/:id", app.useForm)
 	router.HandlerFunc("POST", "/use/:id", app.useForm)
 

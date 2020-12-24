@@ -227,6 +227,7 @@ func (app *application) editForm(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *application) useForm(w http.ResponseWriter, r *http.Request) {
+	feedback := ""
 	id, err := strconv.Atoi(httprouter.ParamsFromContext(r.Context()).ByName("id"))
 	if err != nil {
 		app.errorLog.Print(err)
@@ -241,6 +242,7 @@ func (app *application) useForm(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "404 Form not found", 404)
 			return
 		}
+		feedback = getFeedback(w, r)
 	}
 
 	title, updated, formItems, found, err := app.form.Use(id)
@@ -255,7 +257,6 @@ func (app *application) useForm(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	feedback := ""
 	if r.Method == http.MethodPost {
 		version := r.FormValue("version")
 		if version != updated {
@@ -274,9 +275,8 @@ func (app *application) useForm(w http.ResponseWriter, r *http.Request) {
 
 		format := "id:%v\nupdated:%v\ntitle:%v\nkeys:%#v\nvalues:%#v\n"
 		app.infoLog.Printf(format, id, updated, title, keys, values)
-		feedback = "Response Sent"
-		// without this refresh reposts form but with it loses feedback
-		http.Redirect(w, r, "/use/"+strconv.Itoa(id), 303) //loses feedback
+		setFeedback(w, "Response Sent")
+		http.Redirect(w, r, "/use/"+strconv.Itoa(id), 303)
 	}
 
 	pageData := pageData{
