@@ -237,7 +237,7 @@ func (app *application) useForm(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodGet {
 		// Prevent demo forms from being used, currently id 1/2/3
 		// Think of a better way
-		// Switch this off to enter demo data
+		// Switch this if block off to allow demo form be 'use'able
 		if id == 1 || id == 2 || id == 3 {
 			http.Error(w, "404 Form not found", 404)
 			return
@@ -272,9 +272,18 @@ func (app *application) useForm(w http.ResponseWriter, r *http.Request) {
 			value := strings.TrimSpace(r.FormValue(strconv.Itoa(index)))
 			values = append(values, value)
 		}
-
-		format := "id:%v\nupdated:%v\ntitle:%v\nkeys:%#v\nvalues:%#v\n"
-		app.infoLog.Printf(format, id, updated, title, keys, values)
+		resp := models.Response{
+			FormID:     id,
+			Version:    version,
+			Title:      title,
+			FormKeys:   keys,
+			FormValues: values,
+		}
+		if err := app.response.New(resp); err != nil {
+			app.errorLog.Print(err)
+			http.Error(w, "500 Internal Server Error", 500)
+			return
+		}
 		setFeedback(w, "Response Sent")
 		http.Redirect(w, r, "/use/"+strconv.Itoa(id), 303)
 	}

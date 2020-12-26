@@ -28,8 +28,9 @@ type application struct {
 	infoLog  *log.Logger
 	user     models.UserDB
 	form
-	tmpl *template.Template
-	re   *regexp.Regexp
+	response models.ResponseDB
+	tmpl     *template.Template
+	re       *regexp.Regexp
 	session
 }
 
@@ -67,6 +68,7 @@ func main() {
 		infoLog:  infoLog,
 		user:     models.UserDB{DB: db},
 		form:     models.FormDB{DB: db},
+		response: models.ResponseDB{DB: db},
 		tmpl:     tmpl,
 		re:       re,
 		session:  s,

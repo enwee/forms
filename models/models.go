@@ -26,3 +26,14 @@ type User struct {
 	Pwhash  string
 	Created string
 }
+
+// Response data from other sources e.g. DB
+// can be parsed into this stuct format.
+type Response struct {
+	FormID     int
+	Version    string
+	Posted     string
+	Title      string
+	FormKeys   []string
+	FormValues []string
+}
