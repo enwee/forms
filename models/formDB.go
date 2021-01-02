@@ -96,9 +96,24 @@ func (db FormDB) New(userid int) (id int, err error) {
 // Delete form belonging to the user
 func (db FormDB) Delete(id, userid int) error {
 	q := `DELETE FROM forms WHERE id=? AND userid=?`
-	_, err := db.Exec(q, id, userid)
+	result, err := db.Exec(q, id, userid)
 	if err != nil {
 		return err
+	}
+	// also must remove responses if any
+	// do it as a transaction??
+	if num, _ := result.RowsAffected(); num == 1 {
+		qq := []string{
+			`DELETE FROM versions WHERE formid=?`,
+			`DELETE FROM responses WHERE formid=?`,
+		}
+		for _, q = range qq {
+			_, err := db.Exec(q, id)
+			if err != nil {
+				return err
+			}
+
+		}
 	}
 	return nil
 }
