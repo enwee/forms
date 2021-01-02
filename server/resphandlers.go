@@ -53,6 +53,9 @@ func (app *application) useForm(w http.ResponseWriter, r *http.Request) {
 			}
 			keys = append(keys, formItem.Label)
 			value := strings.TrimSpace(r.FormValue(strconv.Itoa(index)))
+			if formItem.Type == "checkbox" && value == "on" {
+				value = "✅"
+			}
 			values = append(values, value)
 		}
 

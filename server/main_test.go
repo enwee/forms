@@ -11,7 +11,7 @@ import (
 func TestMainServer(t *testing.T) {
 	// Makes e.g 150(numRequests) concurrent requests FOR e.g 10(runs) times
 	// default install of mysqld has 151 max DB connections
-	// heroku clearDB mysql has about 10 max DB connections
+	// heroku jawsDB mysql has 10 max DB connections
 	// test hits max DB connection limit before server limit
 	const url = "http://localhost:5000"
 	const numRequests = 149 // i usually have another cli dev connection to DB
