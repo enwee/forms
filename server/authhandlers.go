@@ -131,10 +131,11 @@ func (app *application) auth(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var u models.User
 		c, err := r.Cookie("sid")
-		if err == http.ErrNoCookie {
-			u = models.User{ID: 0, Name: "demo"}
-		} else {
-			u = app.session.sid[c.Value] //userid is 0 if invalid
+		if err != http.ErrNoCookie {
+			u = app.session.sid[c.Value] // userid is 0 if invalid
+		}
+		if u.ID == 0 {
+			u.Name = "demo"
 		}
 		ctx := context.WithValue(r.Context(), contextKey("user"), u)
 		r = r.WithContext(ctx)

@@ -23,6 +23,8 @@ func (app *application) routes() http.Handler {
 	router.HandlerFunc("GET", "/use/:id", app.useForm)
 	router.HandlerFunc("POST", "/use/:id", app.useForm)
 
+	router.HandlerFunc("GET", "/resp/:id", app.auth(app.viewResp))
+
 	router.HandlerFunc("GET", "/login", app.login)
 	router.HandlerFunc("POST", "/login", app.login)
 	router.HandlerFunc("GET", "/signup", app.signup)

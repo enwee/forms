@@ -298,3 +298,6 @@ func (m mockDB) Update(id, userid int, title string, formItems []models.FormItem
 func (m mockDB) Use(id int) (title, updated string, formItems []models.FormItem, found bool, err error) {
 	return
 }
+func (m mockDB) Check(id, userid int) (bool, error) {
+	return true, nil
+}

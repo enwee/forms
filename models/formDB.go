@@ -118,3 +118,17 @@ func (db FormDB) Update(id, userid int, title string, formItems []FormItem) erro
 	}
 	return nil
 }
+
+// Check if form belongs to user
+func (db FormDB) Check(id, userid int) (bool, error) {
+	q := `SELECT id FROM forms WHERE id=? AND userid=?`
+	row := db.QueryRow(q, id, userid)
+	err := row.Scan(&q)
+	if err != nil {
+		if !errors.Is(err, sql.ErrNoRows) {
+			return false, err
+		}
+		return false, nil
+	}
+	return true, nil
+}

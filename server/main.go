@@ -21,6 +21,7 @@ type form interface {
 	Get(id, userid int) (title string, formItems []models.FormItem, found bool, err error)
 	Update(id, userid int, title string, formItems []models.FormItem) error
 	Use(id int) (title, updated string, formItems []models.FormItem, found bool, err error)
+	Check(id, userid int) (bool, error)
 }
 
 type application struct {
