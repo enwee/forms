@@ -62,6 +62,7 @@ func (db ResponseDB) New(r PostResponse) error {
 }
 
 // Get all past responses to the form (by id)
+// it is assumed that query results are ordered by time
 func (db ResponseDB) Get(id int) (versions []ResponseSet, err error) {
 	// get versions
 	q := `SELECT version, title, formkeys FROM versions WHERE formid=?`
@@ -111,6 +112,7 @@ func (db ResponseDB) Get(id int) (versions []ResponseSet, err error) {
 			return
 		}
 		r.Data = append(r.Data, created)
+		// the assumption here is that results are ordered by time
 		if r.Version != curVersion {
 			indexer++
 			curVersion = r.Version
