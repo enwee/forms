@@ -13,6 +13,7 @@ const (
 	chooseMode = iota + 1
 	editMode
 	viewMode
+	respMode
 )
 
 type pageData struct {
@@ -45,12 +46,6 @@ func (app *application) chooseForm(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *application) addRemForm(w http.ResponseWriter, r *http.Request) {
-	u := r.Context().Value(contextKey("user")).(models.User)
-	if u.ID == 0 {
-		http.Redirect(w, r, "/login", 303)
-		return
-	}
-
 	action := r.FormValue("action")
 	var id int
 	var err error
@@ -62,6 +57,12 @@ func (app *application) addRemForm(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "400 Invalid data", 400)
 			return
 		}
+	}
+
+	u := r.Context().Value(contextKey("user")).(models.User)
+	if action != "res" && u.ID == 0 {
+		http.Redirect(w, r, "/login", 303)
+		return
 	}
 
 	switch action {
@@ -81,6 +82,9 @@ func (app *application) addRemForm(w http.ResponseWriter, r *http.Request) {
 		}
 	case "auth":
 		http.Redirect(w, r, "/logout", 303)
+		return
+	case "res":
+		http.Redirect(w, r, "/resp/"+strconv.Itoa(id), 303)
 		return
 	}
 

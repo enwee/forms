@@ -1,0 +1,24 @@
+{{define "form.resp"}}
+    <h1>Responses</h1>
+    <form>
+    {{range .}}
+        {{.Title}} <em>(ver: {{.Version}})</em>
+        <table>
+            <tr>
+                {{range .TableHeader}}
+                    <td>{{.}}</td>
+                {{end}}
+            </tr>
+            {{range .TableData}}
+                <tr>
+                    {{range .Data}}
+                        <td>{{.}}</td>
+                    {{end}}
+                </tr>
+            {{end}}
+        </table>
+        <br>
+    {{end}}
+    </form>
+    {{if eq (len .) 0}}<em>No Responses Yet!</em>{{end}}
+{{end}}

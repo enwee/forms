@@ -112,10 +112,55 @@ func (app *application) viewResp(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "500 Internal Server Error", 500)
 		return
 	}
-	err = app.tmpl.ExecuteTemplate(w, "resp", versions)
+	pageData := struct {
+		Versions []models.ResponseSet
+		models.User
+		PageMode int
+	}{versions, u, respMode}
+	err = app.tmpl.ExecuteTemplate(w, "form", pageData)
 	if err != nil {
 		app.errorLog.Print(err)
 		http.Error(w, "500 Internal Server Error", 500)
 		return
 	}
+}
+
+func (app *application) delResp(w http.ResponseWriter, r *http.Request) {
+	action := r.FormValue("action")
+	var id int
+	var err error
+
+	if !stringIs(action, "choose", "auth") {
+		action, id, err = getAction(action)
+		if err != nil {
+			app.errorLog.Print(err)
+			http.Error(w, "400 Invalid data", 400)
+			return
+		}
+	}
+
+	u := r.Context().Value(contextKey("user")).(models.User)
+
+	switch action {
+	case "del":
+		_ = id
+		// err = app.form.Delete(id, u.ID)
+		// if err != nil {
+		// 	app.errorLog.Print(err)
+		// 	http.Error(w, "500 Internal Server Error", 500)
+		// 	return
+		// }
+	case "choose":
+		http.Redirect(w, r, "/edit", 303)
+		return
+	case "auth":
+		if u.ID == 0 {
+			http.Redirect(w, r, "/login", 303)
+			return
+		}
+		http.Redirect(w, r, "/logout", 303)
+		return
+	}
+
+	http.Redirect(w, r, "/edit", http.StatusSeeOther)
 }

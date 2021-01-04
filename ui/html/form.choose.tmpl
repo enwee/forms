@@ -8,13 +8,13 @@
             <dt>
                 <a href="edit/{{.ID}}">{{.Title}}</a>
                 -
-                <a href="resp/{{.ID}}" target="_blank" rel="noopener noreferrer">[responses]</a>
-            </dt>
-            <dd>
-                <em>last updated {{.Updated}}</em>
+                <button name="action" value="res{{.ID}}">🗂️</button>
                 {{if not $demoON}}
                     <button name="action" value="del{{.ID}}">❌</button>
                 {{end}}
+            </dt>
+            <dd>
+                <em>(last updated {{.Updated}})</em>
             </dd>
         {{end}}
         </dl>

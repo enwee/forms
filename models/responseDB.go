@@ -93,7 +93,6 @@ func (db ResponseDB) Get(id int) (versions []ResponseSet, err error) {
 	}
 	// get responses
 	indexer := 0
-	curVersion := versions[0].Version
 	q = `SELECT id, formvalues, created, version FROM responses WHERE formid=?`
 	rows, err = db.Query(q, id)
 	if err != nil {
@@ -113,9 +112,8 @@ func (db ResponseDB) Get(id int) (versions []ResponseSet, err error) {
 		}
 		r.Data = append(r.Data, created)
 		// the assumption here is that results are ordered by time
-		if r.Version != curVersion {
+		if r.Version != versions[indexer].Version {
 			indexer++
-			curVersion = r.Version
 		}
 		versions[indexer].TableData = append(versions[indexer].TableData, r)
 	}

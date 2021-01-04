@@ -3,6 +3,7 @@
     {{$chooseMode := 1}}
     {{$editMode := 2}}
     {{$viewMode := 3}}
+    {{$respMode := 4}}
 
     {{$demoON := eq .User.ID $demoMode}}
     {{$chooseOFF := eq .PageMode $chooseMode}}
@@ -21,6 +22,8 @@
             {{template "form.edit" .}}
         {{else if eq .PageMode $viewMode}}
             {{template "form.view" .}}
+        {{else if eq .PageMode $respMode}}
+            {{template "form.resp" .Versions}}
         {{end}}
     </form>
     <br>

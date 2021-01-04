@@ -126,7 +126,19 @@ func (db FormDB) Update(id, userid int, title string, formItems []FormItem) erro
 	}
 	formItemsJSON := string(b)
 
-	q := `UPDATE forms SET title=?, formitems=?, updated=NOW() WHERE id=? AND userid=?`
+	oldTitle, oldFormItemsJSON := "", ""
+	q := `SELECT title, formitems FROM forms WHERE id=?`
+	row := db.QueryRow(q, id)
+	err = row.Scan(&oldTitle, &oldFormItemsJSON)
+	if err != nil {
+		return err
+	}
+	// if no change to title and formItems do not update
+	if title == oldTitle && formItemsJSON == oldFormItemsJSON {
+		return nil
+	}
+
+	q = `UPDATE forms SET title=?, formitems=?, updated=NOW() WHERE id=? AND userid=?`
 	_, err = db.Exec(q, title, formItemsJSON, id, userid)
 	if err != nil {
 		return err
