@@ -14,7 +14,7 @@
     <form method="POST">
         <button name="action" value="choose" {{if $chooseOFF}}disabled{{end}}>Choose Form</button>
         <button name="action" value="edit" {{if $editOFF}}disabled{{end}}>Edit Form</button>
-        <button name="action" value="view" {{if $viewOFF}}disabled{{end}}>Save / View</button>
+        <button name="action" value="view" {{if $viewOFF}}disabled{{end}}>Save / View Form</button>
         <button name="action" value="auth">{{if $demoON}}login{{else}}logout ({{.User.Name}}){{end}}</button>
         {{if eq .PageMode $chooseMode}}
             {{template "form.choose" .}}

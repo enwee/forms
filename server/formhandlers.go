@@ -91,38 +91,6 @@ func (app *application) addRemForm(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/edit", http.StatusSeeOther)
 }
 
-func (app *application) viewForm(w http.ResponseWriter, r *http.Request) {
-	u := r.Context().Value(contextKey("user")).(models.User)
-	id, err := strconv.Atoi(httprouter.ParamsFromContext(r.Context()).ByName("id"))
-	if err != nil {
-		app.errorLog.Print(err)
-		http.Error(w, "400 Invalid data", 400)
-		return
-	}
-	title, formItems, found, err := app.form.Get(id, u.ID)
-	if err != nil {
-		app.errorLog.Print(err)
-		http.Error(w, "500 Internal Server Error", 500)
-		return
-	}
-	if !found {
-		app.errorLog.Printf("form id:%v not found for user:%s", id, u.Name)
-		http.Error(w, "404 Form not found", 404)
-		return
-	}
-
-	pageData := pageData{
-		Form: models.Form{ID: id, Title: title, FormItems: formItems},
-		User: u, Feedback: "", PageMode: viewMode,
-	}
-	err = app.tmpl.ExecuteTemplate(w, "form", pageData)
-	if err != nil {
-		app.errorLog.Print(err)
-		http.Error(w, "500 Internal Server Error", 500)
-		return
-	}
-}
-
 func (app *application) editForm(w http.ResponseWriter, r *http.Request) {
 	u := r.Context().Value(contextKey("user")).(models.User)
 	id, err := strconv.Atoi(httprouter.ParamsFromContext(r.Context()).ByName("id"))
@@ -131,13 +99,36 @@ func (app *application) editForm(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "400 Invalid data", 400)
 		return
 	}
+
 	pageMode := editMode
-	title, feedback := validateTitle(r)
-	formItems, action, opt, index, idx, err := validateForm(r, app.re)
-	if err != nil {
-		app.errorLog.Print(err)
-		http.Error(w, "400 Invalid data", 400)
-		return
+
+	var title string
+	var formItems []models.FormItem
+	var found bool
+	if r.Method == http.MethodGet {
+		title, formItems, found, err = app.form.Get(id, u.ID)
+		if err != nil {
+			app.errorLog.Print(err)
+			http.Error(w, "500 Internal Server Error", 500)
+			return
+		}
+		if !found {
+			app.errorLog.Printf("form id:%v not found for user:%s", id, u.Name)
+			http.Error(w, "404 Form not found", 404)
+			return
+		}
+	}
+
+	var action, opt, feedback string
+	var index, idx int
+	if r.Method == http.MethodPost {
+		title, feedback = validateTitle(r)
+		formItems, action, opt, index, idx, err = validateForm(r, app.re)
+		if err != nil {
+			app.errorLog.Print(err)
+			http.Error(w, "400 Invalid data", 400)
+			return
+		}
 	}
 
 	switch action {
