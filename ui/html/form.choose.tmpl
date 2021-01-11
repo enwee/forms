@@ -2,24 +2,22 @@
     {{$demoMode := 0}}
     {{$demoON := eq .User.ID $demoMode}}
     <h1>Choose a form {{if $demoON}}(sample){{end}}</h1>
-    <form method="POST">
-        <dl>
-        {{range .Forms}}
-            <dt>
-                <a href="edit/{{.ID}}">{{.Title}}</a>
-                -
-                <button name="action" value="res{{.ID}}">🗂️</button>
-                {{if not $demoON}}
-                    <button name="action" value="del{{.ID}}">❌</button>
-                {{end}}
-            </dt>
-            <dd>
-                <em>(last updated {{.Updated}})</em>
-            </dd>
-        {{end}}
-        </dl>
-        {{if not $demoON}}
-            <button name="action" value="add">➕ New Form</button>
-        {{end}}
-    </form>
+    <dl>
+    {{range .Forms}}
+        <dt>
+            <a href="edit/{{.ID}}">{{.Title}}</a>
+            -
+            <button name="action" value="res{{.ID}}">🗂️</button>
+            {{if not $demoON}}
+                <button name="action" value="del{{.ID}}">❌</button>
+            {{end}}
+        </dt>
+        <dd>
+            <em>(last updated {{.Updated}})</em>
+        </dd>
+    {{end}}
+    </dl>
+    {{if not $demoON}}
+        <button name="action" value="add">➕ New Form</button>
+    {{end}}
 {{end}}

@@ -12,9 +12,9 @@
 
     {{template "html.start" .}}
     <form method="POST">
-        <button name="action" value="choose" {{if $chooseOFF}}disabled{{end}}>Choose Form</button>
-        <button name="action" value="edit" {{if $editOFF}}disabled{{end}}>Edit Form</button>
-        <button name="action" value="view" {{if $viewOFF}}disabled{{end}}>Save / View Form</button>
+        <button name="action" value="edit" {{if $editOFF}}disabled{{end}}>Edit this form</button>
+        <button name="action" value="view" {{if $viewOFF}}disabled{{end}}>Save & View form</button>
+        <button name="action" value="choose" {{if $chooseOFF}}disabled{{end}}>Choose form</button>
         <button name="action" value="auth">{{if $demoON}}login{{else}}logout ({{.User.Name}}){{end}}</button>
         {{if eq .PageMode $chooseMode}}
             {{template "form.choose" .}}
@@ -25,6 +25,11 @@
         {{else if eq .PageMode $respMode}}
             {{template "form.resp" .Versions}}
         {{end}}
+        <br><br>
+        <button name="action" value="edit" {{if $editOFF}}disabled{{end}}>Edit this form</button>
+        <button name="action" value="view" {{if $viewOFF}}disabled{{end}}>Save & View form</button>
+        <button name="action" value="choose" {{if $chooseOFF}}disabled{{end}}>Choose form</button>
+        <button name="action" value="auth">{{if $demoON}}login{{else}}logout ({{.User.Name}}){{end}}</button>
     </form>
     <br>
     {{if $demoON}}<em class="error">Demo mode does not save changes

@@ -117,6 +117,7 @@ func (app *application) editForm(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "404 Form not found", 404)
 			return
 		}
+		pageMode = viewMode
 	}
 
 	var action, opt, feedback string
